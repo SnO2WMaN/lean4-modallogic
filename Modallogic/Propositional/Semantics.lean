@@ -46,9 +46,16 @@ notation Γ "⊭ₚ" φ => ¬(Γ ⊨ₚ φ)
 
 namespace Consequence
 
-theorem valid_consequence (Γ : Formulae α) (φ : Formula α) : (⊨ₚ φ) → (Γ ⊨ₚ φ) := by
+variable (Γ : Formulae α) (φ ψ : Formula α)
+
+theorem valid_consequence : (⊨ₚ φ) → (Γ ⊨ₚ φ) := by
   intro h1 V _;
   exact h1 V
+
+@[simp]
+theorem mp : (Γ ⊨ₚ φ →ₚ ψ) → (Γ ⊨ₚ φ) → (Γ ⊨ₚ ψ) := by
+  intro h1 h2 V h3;
+  sorry
 
 end Consequence
 
