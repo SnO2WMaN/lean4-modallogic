@@ -55,11 +55,10 @@ instance [BEq α] : BEq (Formula α) := ⟨Formula.beq⟩
 
 end Formula
 
-def Axiom1 (φ ψ : Formula α) := (φ →ₚ (ψ →ₚ φ))
-def Axiom2 (φ ψ χ : Formula α) := ((φ →ₚ (ψ →ₚ χ)) →ₚ ((φ →ₚ ψ) →ₚ (φ →ₚ χ)))
-def Axiom3 (φ ψ : Formula α) := ((¬ₚφ →ₚ ¬ₚψ) →ₚ (ψ →ₚ φ))
-
 abbrev Formulae (α : Type) := Set (Formula α)
+
+def inconsistent (Γ : Formulae α) :=  ∃ φ, (φ ∈ Γ ∧ ¬ₚφ ∈ Γ)
+def consistent (Γ : Formulae α) := ¬(inconsistent Γ)
 
 end Modallogic.Propositional
 
