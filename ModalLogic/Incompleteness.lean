@@ -243,58 +243,95 @@ section
   
 end
 
-/-- Löb style Consistent -/
-@[simp] def LConsistent := (⊬ₐ[T] ⊥ₐ)
-@[simp] def LInconsistent := ¬(LConsistent T)
+section ArithmeticConditions
+  variable (T : Arithmetic α)
 
-def LConsistencyOf : ArithmeticFormula α := ~ₐPr[T](⊥ₐ)
-notation "ConL[" T "]" => Arithmetic.LConsistencyOf T
+  -- Σ₁ Soundness
+  def Sigma₁Soundness := ∀ σ, (⊢ₐ[T] Pr[T](σ)) → (⊢ₐ[T] σ) -- TODO: Σ₁健全性ではない．
+  class IsSigma₁Sounds where Sigma₁Sounds : ∀ σ, (⊢ₐ[T] Pr[T](σ)) → (⊢ₐ[T] σ)
 
-/-- Hilbert-Bernays style Consistent -/
-@[simp] def HBConsistent := ∀ σ, (⊢ₐ[T] σ) → (⊬ₐ[T] ~ₐσ)
-@[simp] def HBInconsistent := ¬(HBConsistent T)
+  class HasFixedPoint (T : Arithmetic α) where 
+    hasFP (P : ArithmeticFormula α → ArithmeticFormula α) : ∃ σ, ⊢ₐ[T] (σ ⇔ₐ (P σ))
 
-/-- Gödel style Consistent -/
-@[simp] def GConsistent := ∃ σ, (⊬ₐ[T] σ)
-@[simp] def GInconsistent := ¬(GConsistent T)
+  class Incompleteness (T : Arithmetic α) where
+    incompleteness : ∃ σ, (⊬ₐ[T] σ) ∧ (⊬ₐ[T] ~ₐσ)
 
-class LConsistent_eq_HBConsistent (T : Arithmetic α) where
-  L_iff_HB : LConsistent T ↔ HBConsistent T
+end ArithmeticConditions
 
-class HBConsistent_eq_GConsistent (T : Arithmetic α) where
-  HB_iff_G : LConsistent T ↔ HBConsistent T
+section Consistency
+  variable (T : Arithmetic α)
 
-class GConsistent_eq_LConsistent (T : Arithmetic α) where
-  G_iff_L : GConsistent T ↔ LConsistent T
+  -- Löb style Consistent 
+  @[simp] def LConsistent := (⊬ₐ[T] ⊥ₐ)
+  class IsLConsistent where LConsistent : LConsistent T
 
-def Sigma₁Soundness := ∀ σ, (⊢ₐ[T] Pr[T](σ)) → (⊢ₐ[T] σ) -- TODO: Σ₁健全性ではない．
-axiom HBConsistent_of_Soundness {T : Arithmetic α} : Sigma₁Soundness T → HBConsistent T
+  @[simp] def LInconsistent := ¬(LConsistent T)
+  class IsLInconsistent where LInconsistent : LInconsistent T
 
-class Sigma₁Soundness₂ (T : Arithmetic α) where
-  Sigma₁Sounds : ∀ σ, (⊢ₐ[T] Pr[T](σ)) → (⊢ₐ[T] σ)
-axiom HBConsistent_of_Soundness₂ {T : Arithmetic α} : Sigma₁Soundness₂ T → HBConsistent T
+  @[simp] def LConsistencyOf : ArithmeticFormula α := ~ₐPr[T](⊥ₐ)
+  notation "ConL[" T "]" => Arithmetic.LConsistencyOf T
 
-class HasFixedPoint (T : Arithmetic α) where 
-  hasFP (P : ArithmeticFormula α → ArithmeticFormula α) : ∃ σ, ⊢ₐ[T] (σ ⇔ₐ (P σ))
+  -- Hilbert-Bernays style Consistent 
+  @[simp] def HBConsistent := ∀ σ, (⊢ₐ[T] σ) → (⊬ₐ[T] ~ₐσ)
+  class IsHBConsistent where HBConsistent : HBConsistent T
 
-class Derivability1 (T : Arithmetic α) where
-  D1 {σ} : (⊢ₐ[T] σ) → (⊢ₐ[T] Pr[T](σ))
+  @[simp] def HBInconsistent := ¬(HBConsistent T)
+  class IsHBInconsistent where HBInconsistent : HBInconsistent T
 
-class Derivability2 (T : Arithmetic α) where
-  D2 {σ π} : ⊢ₐ[T] (Pr[T](σ ⇒ₐ π)) ⇒ₐ ((Pr[T](σ)) ⇒ₐ (Pr[T](π)))
+  axiom HBConsistent_of_Soundness {T : Arithmetic α} : IsSigma₁Sounds T → IsHBConsistent T
 
-lemma Derivability2.D2' {T : Arithmetic α} [Derivability2 T] : ∀ {σ π}, ⊢ₐ[T] (Pr[T](σ ⋏ₐ π)) ⇔ₐ ((Pr[T](σ)) ⋏ₐ (Pr[T](π))) := by sorry
+  -- Gödel style Consistent 
+  @[simp] def GConsistent := ∃ σ, (⊬ₐ[T] σ)
+  class IsGConsistent where GConsistent : GConsistent T
 
-class Derivability3 (T : Arithmetic α) where
-  D3 {σ} : ⊢ₐ[T] (Pr[T](σ)) ⇒ₐ (Pr[T](Pr[T](σ)))
+  @[simp] def GInconsistent := ¬(GConsistent T)
+  class IsGInconsistent where GInconsistent : GInconsistent T
 
-class FormalizedSigma₁Completeness (T : Arithmetic α) where
-  FS1C : ∀ {σ}, ⊢ₐ[T] (σ ⇒ₐ Pr[T](σ)) -- TODO: Σ₁という制約がない．
+end Consistency
 
-lemma Derivability3_of_FormalizedSigma₁Completeness [FormalizedSigma₁Completeness T] : (Derivability3 T) := ⟨FormalizedSigma₁Completeness.FS1C⟩
+section ProvablilityFixedPoints
 
-class Incompleteness (T : Arithmetic α) where
-  incompleteness : ∃ σ, (⊬ₐ[T] σ) ∧ (⊬ₐ[T] ~ₐσ)
+  variable (T : Arithmetic α) 
+
+  @[simp] def GoedelSentence (G : ArithmeticFormula α) := ⊢ₐ[T] (G ⇔ₐ ~ₐPr[T](G))
+  class IsGoedelSentence (T : Arithmetic α) (G : ArithmeticFormula α) where 
+    goedel : GoedelSentence T G
+
+  @[simp] def HenkinSentence (H : ArithmeticFormula α) := ⊢ₐ[T] (H ⇔ₐ Pr[T](H))
+  @[simp] def JeroslowSentence (J : ArithmeticFormula α) := ⊢ₐ[T] (J ⇔ₐ Pr[T](~ₐJ))
+  @[simp] def NotJeroslowSentence (NJ : ArithmeticFormula α) := ⊢ₐ[T] (NJ ⇔ₐ ~ₐPr[T](~ₐNJ))
+
+  @[simp] def KreiselSentence (σ : ArithmeticFormula α) (K : ArithmeticFormula α) := ⊢ₐ[T] (K ⇔ₐ (Pr[T](K) ⇒ₐ σ))
+  class IsKreiselSentence (T : Arithmetic α) (σ : ArithmeticFormula α) (K : ArithmeticFormula α) where 
+    kreisel : KreiselSentence T σ K
+
+  class HasGoedelSentence where hasGoedel : ∃ G, GoedelSentence T G
+  @[simp] instance [HasFixedPoint T] : HasGoedelSentence T := ⟨(HasFixedPoint.hasFP (λ σ => ~ₐPr[T](σ)))⟩
+
+  class HasKreiselSentence where hasKriesel (σ : ArithmeticFormula α) : ∃ K, KreiselSentence T σ K 
+  @[simp] instance [HasFixedPoint T] : HasKreiselSentence T := ⟨λ σ => HasFixedPoint.hasFP (λ π => (Pr[T](π) ⇒ₐ σ))⟩
+
+end ProvablilityFixedPoints
+
+section DerivabilityConditions
+
+  class Derivability1 (T : Arithmetic α) where
+    D1 {σ} : (⊢ₐ[T] σ) → (⊢ₐ[T] Pr[T](σ))
+
+  class Derivability2 (T : Arithmetic α) where
+    D2 {σ π} : ⊢ₐ[T] (Pr[T](σ ⇒ₐ π)) ⇒ₐ ((Pr[T](σ)) ⇒ₐ (Pr[T](π)))
+
+  lemma Derivability2.D2' {T : Arithmetic α} [Derivability2 T] : ∀ {σ π}, ⊢ₐ[T] (Pr[T](σ ⋏ₐ π)) ⇔ₐ ((Pr[T](σ)) ⋏ₐ (Pr[T](π))) := by sorry
+
+  class Derivability3 (T : Arithmetic α) where
+    D3 {σ} : ⊢ₐ[T] (Pr[T](σ)) ⇒ₐ (Pr[T](Pr[T](σ)))
+
+  class FormalizedSigma₁Completeness (T : Arithmetic α) where
+    FS1C : ∀ {σ}, ⊢ₐ[T] (σ ⇒ₐ Pr[T](σ)) -- TODO: Σ₁という制約がない．
+
+  instance [FormalizedSigma₁Completeness T] : (Derivability3 T) := ⟨FormalizedSigma₁Completeness.FS1C⟩
+
+end DerivabilityConditions
 
 section
   variable {T U : Arithmetic α} [Derivability1 T] [Derivability2 T] [Derivability3 T] {σ π ρ : ArithmeticFormula α} 
@@ -320,7 +357,6 @@ section
     apply intro_iffₐ;
     . simp [mpₐ]; apply distribute_bew.mp;
     . simp [mpₐ]; apply distribute_bew.mpr;
-
 end
 
 end Arithmetic
@@ -331,46 +367,35 @@ open Arithmetic Arithmetic Derivability1
 
 variable [Derivability1 T]
 
-class GoedelSentence (T : Arithmetic α) (G : ArithmeticFormula α) where 
-  goedel : ⊢ₐ[T] (G ⇔ₐ ~ₐPr[T](G))
-
-@[simp]
-def GoedelSentence₂ (T : Arithmetic α) (G : ArithmeticFormula α) := ⊢ₐ[T] (G ⇔ₐ ~ₐPr[T](G))
-
-class HasGoedelSentence (T : Arithmetic α) where
-  hasGoedel : ∃ G, GoedelSentence₂ T G
-
-instance (T : Arithmetic α) [HasFixedPoint T] : HasGoedelSentence T := ⟨(HasFixedPoint.hasFP (λ σ => ~ₐPr[T](σ)))⟩
-
-variable {T : Arithmetic α} [HasFixedPoint T] [Derivability1 T] [GoedelSentence T G]
-variable {G : ArithmeticFormula α} {hG : GoedelSentence₂ T G}
+variable {T : Arithmetic α} {G} [hG : IsGoedelSentence T G] [HasFixedPoint T] [Derivability1 T] 
 
 /--
   Unprovablility side of Gödel's 1st incompleteness theorem.
 -/
-theorem Unprovable_GoedelSentence_of_HBConsistent : HBConsistent T → (⊬ₐ[T] G) := by
-  intro hC hPG;
+theorem Unprovable_GoedelSentence_of_HBConsistent [hC : IsHBConsistent T] : (⊬ₐ[T] G) := by
+  intro hPG;
 
   have h₁ : ⊢ₐ[T] Pr[T](G) := D1 hPG;
-  have h₂ : ⊢ₐ[T] ~ₐG := iffₐ_negₐ_left hG (iff_dneₐ.mp h₁)
+  have h₂ : ⊢ₐ[T] ~ₐG := iffₐ_negₐ_left hG.goedel (iff_dneₐ.mp h₁)
 
-  have h₃ : ⊬ₐ[T] ~ₐG := hC G hPG;
+  have h₃ : ⊬ₐ[T] ~ₐG := hC.HBConsistent G hPG;
 
   exact h₃ h₂;
 
 /--
   Unrefutability side of Gödel's 1st incompleteness theorem.
 -/
-theorem Unrefutable_GoedelSentence_of_Soundness : Sigma₁Soundness₂ T → (⊬ₐ[T] ~ₐG) := by
-  intro hS hRG;
-  have hC := HBConsistent_of_Soundness₂ hS;
+theorem Unrefutable_GoedelSentence_of_Soundness [hS : IsSigma₁Sounds T] : (⊬ₐ[T] ~ₐG) := by
+  intro hRG;
+  have hC := HBConsistent_of_Soundness hS;
 
-  have h₁ : ⊢ₐ[T] Pr[T](G) := elim_dneₐ (iffₐ_right (iffₐ_negₐ.mp hG) hRG)
+  have h₁ : ⊢ₐ[T] Pr[T](G) := elim_dneₐ (iffₐ_right (iffₐ_negₐ.mp hG.goedel) hRG)
   have h₂ : ⊢ₐ[T] G := hS.Sigma₁Sounds G h₁;
-  have h₃ : ⊬ₐ[T] ~ₐG := hC G h₂;
+  have h₃ : ⊬ₐ[T] ~ₐG := hC.HBConsistent G h₂;
 
   exact h₃ hRG;
 
+/-
 variable {G : ArithmeticFormula α} [GoedelSentence T G]
 
 /--
@@ -406,6 +431,7 @@ theorem GoedelIT1 : Sigma₁Soundness T → Incompleteness T := by
   have h₂ :  ⊬ₐ[T] G := Unprovable_of_HBConsistent (HBConsistent_of_Soundness hS);
   have h₃ :  ⊬ₐ[T] ~ₐG := Unrefutable_of_Soundness hS;
   exact ⟨G, h₂, h₃⟩
+-/
 
 end GoedelIT1
 
@@ -413,7 +439,7 @@ section GoedelIT2
 
 open Arithmetic Arithmetic Derivability1 Derivability2 
 
-variable {G : ArithmeticFormula α} [GoedelSentence T G] [Derivability1 T] [Derivability2 T]
+variable {T : Arithmetic α} [Derivability1 T] [Derivability2 T]
 
 lemma GoedelIT2.lem1 : ∀ (σ : ArithmeticFormula α), ⊢ₐ[T] ~ₐPr[T](σ) ⇒ₐ ConL[T] := by
   intro σ; 
@@ -444,9 +470,10 @@ lemma GoedelIT2.lem2
     exact contraposeₐ.mp h₄;
     -/
 
-variable [FormalizedSigma₁Completeness T]
+variable {G : ArithmeticFormula α} [IsGoedelSentence T G] [FormalizedSigma₁Completeness T]
+
 lemma GoedelIT2.lem3 : ⊢ₐ[T] (ConL[T] ⇒ₐ ~ₐPr[T](G)) := by
-  have h₁ := contraposeₐ.mp (iffₐ_intro_impₐ_right (iffₐ_comm.mp (@GoedelSentence.goedel _ T G _)));
+  have h₁ := contraposeₐ.mp (iffₐ_intro_impₐ_right (iffₐ_comm.mp (@IsGoedelSentence.goedel _ T G _)));
   have h₂ : ⊢ₐ[T] ~ₐG ⇒ₐ Pr[T](~ₐG) := FormalizedSigma₁Completeness.FS1C;
   have h₃ := elim_impₐ_ant_dneₐ (impₐ_trans h₁ h₂);
   exact (@GoedelIT2.lem2 _ T _ _ T (by simp) G).mpr h₃
@@ -454,24 +481,22 @@ lemma GoedelIT2.lem3 : ⊢ₐ[T] (ConL[T] ⇒ₐ ~ₐPr[T](G)) := by
 theorem GoedelSentence_iffₐ_LConsistencyOf : (⊢ₐ[T] G ⇔ₐ ConL[T]) := by
   have h₁ :  ⊢ₐ[T] ~ₐPr[T](G) ⇒ₐ ConL[T] := GoedelIT2.lem1 G;
   have h₂ :  ⊢ₐ[T] ConL[T] ⇒ₐ ~ₐPr[T](G) := GoedelIT2.lem3;
-  exact iffₐ_trans GoedelSentence.goedel (intro_iffₐ h₁ h₂);
+  exact iffₐ_trans IsGoedelSentence.goedel (intro_iffₐ h₁ h₂);
 
 /--
   Unprovability side of Gödel's 2nd incompleteness theorem.
 -/
-theorem Unprovable_LConsistencyOf_of_HBConsistent : HBConsistent T → (⊬ₐ[T] ConL[T]) := by
-  intro hC;
+theorem Unprovable_LConsistencyOf_of_HBConsistent [hC : IsHBConsistent T] : (⊬ₐ[T] ConL[T]) := by
   have h₁ : ⊢ₐ[T] G ⇔ₐ ConL[T] := GoedelSentence_iffₐ_LConsistencyOf;
-  have h₂ : ⊬ₐ[T] G := Unprovable_of_HBConsistent hC;
+  have h₂ : ⊬ₐ[T] G := Unprovable_GoedelSentence_of_HBConsistent;
   exact iffₐ_unprovable_left h₁ h₂;
 
 /--
   Unrefutability side of Gödel's 2nd incompleteness theorem.
 -/
-theorem Unrefutable_LConsistencyOf_of_Soundness : Sigma₁Soundness T → (⊬ₐ[T] ~ₐConL[T]) := by
-  intro hS;
+theorem Unrefutable_LConsistencyOf_of_Soundness [hS : IsSigma₁Sounds T] : (⊬ₐ[T] ~ₐConL[T]) := by
   have h₁ : ⊢ₐ[T] ~ₐG ⇔ₐ ~ₐConL[T] := iffₐ_negₐ.mp GoedelSentence_iffₐ_LConsistencyOf
-  have h₂ : ⊬ₐ[T] ~ₐG := Unrefutable_of_Soundness hS;
+  have h₂ : ⊬ₐ[T] ~ₐG := Unrefutable_GoedelSentence_of_Soundness;
   exact iffₐ_unprovable_left h₁ h₂
 
 #print axioms Unrefutable_LConsistencyOf_of_Soundness
@@ -499,29 +524,19 @@ open Arithmetic Arithmetic Derivability1 Derivability2
 
 variable {T : Arithmetic α} [HasFixedPoint T] 
 
-axiom KrieselSentence (T : Arithmetic α) (σ : ArithmeticFormula α) : ∃ K, ⊢ₐ[T] (K ⇔ₐ (Pr[T](K) ⇒ₐ σ))
--- def KrieselSentence₂ (T : Arithmetic α) [HasFixedPoint T] (σ : ArithmeticFormula α) := @HasFixedPoint.hasFP _ T _ (λ π => (Pr[T](π) ⇒ₐ σ))
-
-def KreiselSentence₂ (T : Arithmetic α) (σ : ArithmeticFormula α) (K : ArithmeticFormula α) := ⊢ₐ[T] (K ⇔ₐ (Pr[T](K) ⇒ₐ σ))
-
-class HasKreiselSentence (T : Arithmetic α) where 
-  hasKriesel (σ : ArithmeticFormula α) : ∃ K, KreiselSentence₂ T σ K 
-
-instance (T : Arithmetic α) [HasFixedPoint T] : HasKreiselSentence T := ⟨λ σ => HasFixedPoint.hasFP (λ π => (Pr[T](π) ⇒ₐ σ))⟩
-
-variable [HasFixedPoint T] [Derivability1 T] [Derivability2 T] [Derivability3 T]
+variable [hFP : HasFixedPoint T] [Derivability1 T] [Derivability2 T] [Derivability3 T]
 
 /--
   Proof of Löb's Theorem without Gödel's 2nd incompleteness theorem.
 -/
-theorem Loeb_without_GoedelIT2 {σ} : (⊢ₐ[T] σ) ↔ (⊢ₐ[T] Pr[T](σ) ⇒ₐ σ) := by
+theorem Loeb_without_GoedelIT2 {σ K} [hK : IsKreiselSentence T σ K] : (⊢ₐ[T] σ) ↔ (⊢ₐ[T] Pr[T](σ) ⇒ₐ σ) := by
   apply Iff.intro;
   . exact λ H => impₐ_intro_con (Pr[T](σ)) H;
   . intro H;
     -- have a : ⊢ₐ[T] K ⇔ₐ Pr[T](K) ⇒ₐ σ := KreiselSentence₂.kreisel
-    have ⟨K, hK⟩ := KrieselSentence T σ; 
+    -- have ⟨K, hK⟩ := KrieselSentence T σ; 
     have h₁ : ⊢ₐ[T] Pr[T](K) ⇒ₐ Pr[T](Pr[T](K) ⇒ₐ σ) := by
-      have hK' := iffₐ_eq_iff.mp hK;
+      have hK' := iffₐ_eq_iff.mp hK.kreisel;
       
       -- have hK'l := hK'.mp;
       -- have hK'r := hK'.mpr;
@@ -545,15 +560,16 @@ theorem Loeb_without_GoedelIT2 {σ} : (⊢ₐ[T] σ) ↔ (⊢ₐ[T] Pr[T](σ) �
       -- have h₃₂ := impₐ_trans h₃₁ h₂;
       sorry
     have h₄ : ⊢ₐ[T] Pr[T](K) ⇒ₐ σ := impₐ_trans h₃ H;
-    have h₅ : ⊢ₐ[T] K := (iffₐ_eq_iff.mp hK).mpr h₄;
+    have h₅ : ⊢ₐ[T] K := (iffₐ_eq_iff.mp hK.kreisel).mpr h₄;
     have h₆ : ⊢ₐ[T] Pr[T](K) := Derivability1.D1 h₅;
     have h₇ : ⊢ₐ[T] σ := (mpₐ _).mp h₄ h₆;
     exact h₇;
 
 lemma LInconsistent_of_Provable_LConsistencyOf : (⊢ₐ[T] ConL[T]) → (LInconsistent T) := by
-  intro h₁;
-  have h₂ : ⊢ₐ[T] ⊥ₐ := Loeb_without_GoedelIT2.mpr h₁;
-  aesop
+  sorry;
+  -- intro h₁;
+  -- have h₂ : ⊢ₐ[T] ⊥ₐ := (@Loeb_without_GoedelIT2 _ T _ _ _ _ _ _).mpr h₁;
+  -- aesop
 
 /--
   Another proof of unprovability side of Gödel's 2nd incompleteness theorem via Löb's Theorem.
