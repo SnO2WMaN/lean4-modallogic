@@ -114,7 +114,6 @@ section
 
   lemma excludeMiddleₐ : (⊢ₐ[T] σ ⋎ₐ ~ₐσ) := by simp [disj, neg, mpₐ];
 
-  lemma nonContradictionₐ : (⊢ₐ[T] ~ₐ(σ ⋏ₐ ~ₐσ)) := by sorry
 
   lemma inst_dneₐ : (⊢ₐ[T] σ) → (⊢ₐ[T] ~ₐ~ₐσ) := by
     simp [neg, mpₐ];
@@ -145,7 +144,7 @@ section
     apply Iff.intro;
     . intro h; exact contraposeₐ.mp (contraposeₐ.mp h);
     . intro h; exact contraposeₐ.mpr (contraposeₐ.mpr h);
-  axiom impₐ_intro_con (σ) : (⊢ₐ[T] π) → (⊢ₐ[T] σ ⇒ₐ π)
+  lemma impₐ_intro_con (σ) : (⊢ₐ[T] π) → (⊢ₐ[T] σ ⇒ₐ π) := λ h => (mpₐ _).mp (ax1 T π σ) h
 
   lemma elim_impₐ_ant_dneₐ : (⊢ₐ[T] ~ₐ~ₐσ ⇒ₐ π) → (⊢ₐ[T] σ ⇒ₐ π) := by 
     intro h;
@@ -167,6 +166,8 @@ section
     apply Iff.intro;
     . sorry
     . sorry
+    
+  axiom nonContradictionₐ : (⊢ₐ[T] ~ₐ(σ ⋏ₐ ~ₐσ))
 
   lemma intro_conjₐ : (⊢ₐ[T] σ) → (⊢ₐ[T] π) → (⊢ₐ[T] σ ⋏ₐ π) := by 
     intro h₁ h₂;
@@ -207,10 +208,14 @@ section
       have hr := (mpₐ _).mpr h.mpr;
       exact ⟨hl, hr⟩;
 
+
   lemma intro_iffₐ : (⊢ₐ[T] σ ⇒ₐ π) → (⊢ₐ[T] π ⇒ₐ σ) → (⊢ₐ[T] σ ⇔ₐ π) := λ h₁ h₂ => intro_conjₐ h₁ h₂
 
   lemma iffₐ_comm : (⊢ₐ[T] σ ⇔ₐ π) ↔ (⊢ₐ[T] π ⇔ₐ σ) := by
     apply Iff.intro <;> exact λ h => iffₐ_eq_iff.mpr (Iff.comm.mp (iffₐ_eq_iff.mp h))
+
+  lemma iffₐ_mp : (⊢ₐ[T] σ ⇔ₐ π) → (⊢ₐ[T] σ ⇒ₐ π) := λ h => (mpₐ _).mpr (iffₐ_eq_iff.mp h).mp
+  lemma iffₐ_mpr : (⊢ₐ[T] σ ⇔ₐ π) → (⊢ₐ[T] π ⇒ₐ σ) := λ h => iffₐ_mp (iffₐ_comm.mp h)
 
   lemma iffₐ_negₐ : (⊢ₐ[T] σ ⇔ₐ π) ↔ (⊢ₐ[T] ~ₐσ ⇔ₐ ~ₐπ) := by
     simp [ArithmeticFormula.iff, conjₐ_eq_conj];
@@ -477,28 +482,11 @@ theorem Unrefutable_LConsistencyOf_of_Soundness [hS : IsSigma₁Sounds T] : (⊬
 
 end GoedelIT2
 
-/-
-section Loeb_without_GoedelIT2
-
-variable [HasFixedPoint T] [Derivability1 T] [Derivability2 T] [Derivability3 T]
-theorem Loeb_with_GoedelIt2 {σ} : (⊢ₐ[T] σ) ↔ (⊢ₐ[T] Pr[T](σ) ⇒ₐ σ) := by
-  apply Iff.intro;
-  . exact λ H => impₐ_intro_con (Pr[T](σ)) H;
-  . intro H;
-    have h₁ := contraposeₐ.mp H;
-    have h₂ := (@Derivability2.D2' _ T _ (~ₐσ) ⊥ₐ);
-    have h₂₁ := contraposeₐ.mp h₂;
-
-end Loeb_without_GoedelIT2
--/
-
 section Loeb_without_GoedelIT2
 
 open Arithmetic Arithmetic Derivability1 Derivability2
 
-variable {T : Arithmetic α} [HasFixedPoint T] 
-
-variable [hFP : HasFixedPoint T] [Derivability1 T] [Derivability2 T] [Derivability3 T]
+variable {T : Arithmetic α} [hFP : HasFixedPoint T] [Derivability1 T] [Derivability2 T] [Derivability3 T]
 
 /--
   Proof of Löb's Theorem without Gödel's 2nd incompleteness theorem.
@@ -508,35 +496,18 @@ theorem Loeb_without_GoedelIT2 {σ} : (⊢ₐ[T] σ) ↔ (⊢ₐ[T] Pr[T](σ) �
   . exact λ H => impₐ_intro_con (Pr[T](σ)) H;
   . intro H;
     have ⟨K, hK⟩ := (HasKreiselSentence_of_HasFixedPoint hFP).hasKriesel σ
-    have h₁ : ⊢ₐ[T] Pr[T](K) ⇒ₐ Pr[T](Pr[T](K) ⇒ₐ σ) := by
-      have hK' := iffₐ_eq_iff.mp hK;
-      
-      -- have hK'l := hK'.mp;
-      -- have hK'r := hK'.mpr;
-      
-      have h₁l : (⊢ₐ[T] K) → (⊢ₐ[T] Pr[T](K)) := Derivability1.D1;
-      have h₁r : (⊢ₐ[T] (Pr[T](K) ⇒ₐ σ)) → (⊢ₐ[T] Pr[T](Pr[T](K) ⇒ₐ σ)) := Derivability1.D1;
+    have h₁ : ⊢ₐ[T] K ⇒ₐ Pr[T](K) ⇒ₐ σ := iffₐ_mp hK;
+    have h₂ : ⊢ₐ[T] K ⇒ₐ Pr[T](K) := (mpₐ _).mpr D1;
+    have h₃ : ⊢ₐ[T] (K ⇒ₐ Pr[T](K)) ⇒ₐ K ⇒ₐ σ := (mpₐ _).mp (ax2 _ _ _ _) h₁;
+    have h₄ : ⊢ₐ[T] K ⇒ₐ σ := (mpₐ _).mp h₃ h₂;
+    have h₅ : ⊢ₐ[T] Pr[T](K) ⇒ₐ Pr[T](σ) := (mpₐ _).mp D2 (D1 h₄);
+    have h₆ : ⊢ₐ[T] Pr[T](K) ⇒ₐ σ := impₐ_trans h₅ H;
+    have h₇ : ⊢ₐ[T] K := (iffₐ_eq_iff.mp hK).mpr h₆;
+    have h₈ : ⊢ₐ[T] Pr[T](K) := Derivability1.D1 h₇;
+    have h₉ : ⊢ₐ[T] σ := (mpₐ _).mp h₆ h₈;
+    assumption;
 
-
-
-      -- have h₁r := (iffₐ_eq_iff.mp hK).mp;
-      -- have h2 := λ h => h₁l (h₁r h);
-      
-      -- have hKl := hK'.mp;
-      -- have hkr := hK'.mpr;
-
-      sorry
-    have h₂ : ⊢ₐ[T] Pr[T](K) ⇒ₐ (Pr[T](Pr[T](K)) ⇒ₐ Pr[T](σ)) := impₐ_trans h₁ Derivability2.D2;
-    have h₃ : ⊢ₐ[T] Pr[T](K) ⇒ₐ Pr[T](σ) := by
-      have h₃₁ := @Derivability3.D3 _ T _ K;
-      have h₃₂ := (mpₐ _).mp h₂;
-      -- have h₃₂ := impₐ_trans h₃₁ h₂;
-      sorry
-    have h₄ : ⊢ₐ[T] Pr[T](K) ⇒ₐ σ := impₐ_trans h₃ H;
-    have h₅ : ⊢ₐ[T] K := (iffₐ_eq_iff.mp hK).mpr h₄;
-    have h₆ : ⊢ₐ[T] Pr[T](K) := Derivability1.D1 h₅;
-    have h₇ : ⊢ₐ[T] σ := (mpₐ _).mp h₄ h₆;
-    exact h₇;
+#print axioms Loeb_without_GoedelIT2
 
 lemma LInconsistent_of_Provable_LConsistencyOf : (⊢ₐ[T] ConL[T]) → (LInconsistent T) := by
   intro h₁;
