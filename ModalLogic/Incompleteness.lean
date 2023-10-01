@@ -14,16 +14,16 @@ infixr:43 " ⇒ₐ " => ArithmeticFormula.imply
 
 variable (σ π : ArithmeticFormula α)
 
-def ArithmeticFormula.neg := σ ⇒ₐ ⊥ₐ
+@[simp] def ArithmeticFormula.neg := σ ⇒ₐ ⊥ₐ
 prefix:45 "~ₐ" => ArithmeticFormula.neg
 
-def ArithmeticFormula.disj := ~ₐσ ⇒ₐ π
+@[simp] def ArithmeticFormula.disj := ~ₐσ ⇒ₐ π
 infixl:44 " ⋎ₐ " => ArithmeticFormula.disj
 
-def ArithmeticFormula.conj := ~ₐσ ⋎ₐ ~ₐπ
+@[simp] def ArithmeticFormula.conj := ~ₐσ ⋎ₐ ~ₐπ
 infixl:44 " ⋏ₐ " => ArithmeticFormula.conj
 
-def ArithmeticFormula.iff := (σ ⇒ₐ π) ⋏ₐ (π ⇒ₐ σ)
+@[simp] def ArithmeticFormula.iff := (σ ⇒ₐ π) ⋏ₐ (π ⇒ₐ σ)
 infixl:42 " ⇔ₐ " => ArithmeticFormula.iff
 
 structure Arithmetic (α) where
@@ -32,7 +32,9 @@ structure Arithmetic (α) where
   ax1 (σ π) : Provable (σ ⇒ₐ (π ⇒ₐ σ))
   ax2 (σ π ρ) : Provable ((σ ⇒ₐ (π ⇒ₐ ρ)) ⇒ₐ ((σ ⇒ₐ π) ⇒ₐ (σ ⇒ₐ ρ)))
   ax3 (σ π) : Provable ((~ₐσ ⇒ₐ ~ₐπ) ⇒ₐ (π ⇒ₐ σ))
-  mpₐ {σ π} : Provable (σ ⇒ₐ π) ↔ Provable σ → Provable π -- TODO: ↔ではない筈．
+  mpₐ {σ π} : Provable (σ ⇒ₐ π) ↔ (Provable σ → Provable π) -- TODO: ↔ではない筈．
+  -- modusponens {σ π} : (Provable (σ ⇒ₐ π)) → (Provable σ) → (Provable π)
+  -- implyformalize {σ π} : (Provable σ → Provable π) → Provable (σ ⇒ₐ π)
 
 notation:60 "Pr[" T "](" σ ")" => Arithmetic.bew T σ
 notation:20 "⊢ₐ[" T "] " σ => Arithmetic.Provable T σ
@@ -41,12 +43,20 @@ namespace Arithmetic
 
 variable (T : Arithmetic α)
 
+@[simp] def ax1_def (σ π) : ⊢ₐ[T] σ ⇒ₐ (π ⇒ₐ σ) := T.ax1 σ π
+@[simp] def ax2_def (σ π ρ) : ⊢ₐ[T] (σ ⇒ₐ (π ⇒ₐ ρ)) ⇒ₐ ((σ ⇒ₐ π) ⇒ₐ (σ ⇒ₐ ρ)) := T.ax2 σ π ρ
+@[simp] def ax3_def (σ π) : ⊢ₐ[T] ((~ₐσ ⇒ₐ ~ₐπ) ⇒ₐ (π ⇒ₐ σ)) := T.ax3 σ π
+@[simp] def mpₐ_def {σ π} : (⊢ₐ[T] σ ⇒ₐ π) ↔ ((⊢ₐ[T] σ) → (⊢ₐ[T] π)) := T.mpₐ
+-- @[simp] def modusponens_def {σ π} : (⊢ₐ[T] (σ ⇒ₐ π)) → (⊢ₐ[T] σ) → (⊢ₐ[T] π) := T.modusponens
+
 def Unprovable (σ : ArithmeticFormula α) := ¬(⊢ₐ[T] σ)
 notation:20 "⊬ₐ[" T "] " σ  => Arithmetic.Unprovable T σ
 
 section
   open Arithmetic ArithmeticFormula
   variable {T : Arithmetic α} {σ π ρ : ArithmeticFormula α} [DecidableEq (ArithmeticFormula α)]
+
+  -- lemma impₐ_intro : (⊢ₐ[T] π) → (⊢ₐ[T] σ ⇒ₐ π) := (modusponens T (ax1 T π σ))
 
   -- lemma iff_dneₐ : (⊢ₐ[T] σ) ↔ (⊢ₐ[T] ~ₐ~ₐσ) := by
   --   apply Iff.intro;
@@ -107,77 +117,71 @@ section
 
   lemma idₐ : (⊢ₐ[T] σ ⇒ₐ σ) := by simp [mpₐ];
 
-  lemma impₐ_trans : (⊢ₐ[T] σ ⇒ₐ π) → (⊢ₐ[T] π ⇒ₐ ρ) → (⊢ₐ[T] σ ⇒ₐ ρ) := by
-    simp [mpₐ];
-    intro h₁ h₂ h₃;
-    exact h₂ (h₁ h₃);
+  lemma impₐ_trans : (⊢ₐ[T] σ ⇒ₐ π) → (⊢ₐ[T] π ⇒ₐ ρ) → (⊢ₐ[T] σ ⇒ₐ ρ) := by aesop;
 
   lemma excludeMiddleₐ : (⊢ₐ[T] σ ⋎ₐ ~ₐσ) := by simp [disj, neg, mpₐ];
 
-
-  lemma inst_dneₐ : (⊢ₐ[T] σ) → (⊢ₐ[T] ~ₐ~ₐσ) := by
-    simp [neg, mpₐ];
-    intro h₁ h₂;
-    exact h₂ h₁;
+  @[simp]
+  lemma inst_dneₐ : (⊢ₐ[T] σ) → (⊢ₐ[T] ~ₐ~ₐσ) := by aesop;
   
   @[simp]
-  lemma elim_dneₐ : (⊢ₐ[T] ~ₐ~ₐσ) → (⊢ₐ[T] σ) := by sorry
-    -- simp [neg];
-    -- intro h;
-    -- simp [emptyContext] at h;
-    -- have h := deduction.mpr h;
+  lemma elim_dneₐ : (⊢ₐ[T] ~ₐ~ₐσ) → (⊢ₐ[T] σ) := by sorry;
 
   lemma iff_dneₐ : (⊢ₐ[T] σ) ↔ (⊢ₐ[T] ~ₐ~ₐσ) := ⟨inst_dneₐ, elim_dneₐ⟩
 
+  @[simp]
   lemma contraposeₐ : (⊢ₐ[T] σ ⇒ₐ π) ↔ (⊢ₐ[T] (~ₐπ) ⇒ₐ (~ₐσ)) := by
     apply Iff.intro;
-    . simp [neg, mpₐ];
-      exact λ h₁ h₂ h => h₂ (h₁ h)
-    . sorry;
+    . aesop;
+    . exact λ h => (mpₐ _).mp (ax3 _ _ _) h;
 
-
-  lemma explosionₐ (σ) : (⊢ₐ[T] ⊥ₐ ⇒ₐ σ) := by 
-    rw [contraposeₐ];
-    sorry
+  lemma explosionₐ (σ) : (⊢ₐ[T] ⊥ₐ ⇒ₐ σ) := by aesop;
       
   lemma impₐ_iff_dneₐ_impₐ : (⊢ₐ[T] σ ⇒ₐ π) ↔ (⊢ₐ[T] ~ₐ~ₐσ ⇒ₐ ~ₐ~ₐπ) := by
     apply Iff.intro;
     . intro h; exact contraposeₐ.mp (contraposeₐ.mp h);
     . intro h; exact contraposeₐ.mpr (contraposeₐ.mpr h);
-  lemma impₐ_intro_con (σ) : (⊢ₐ[T] π) → (⊢ₐ[T] σ ⇒ₐ π) := λ h => (mpₐ _).mp (ax1 T π σ) h
+    
+  lemma impₐ_intro_con (σ) : (⊢ₐ[T] π) → (⊢ₐ[T] σ ⇒ₐ π) := by aesop
 
-  lemma elim_impₐ_ant_dneₐ : (⊢ₐ[T] ~ₐ~ₐσ ⇒ₐ π) → (⊢ₐ[T] σ ⇒ₐ π) := by 
-    intro h;
-    have h₁ := (mpₐ _).mp h;
-    rw [←iff_dneₐ] at h₁;
-    exact (mpₐ T).mpr h₁;
+  lemma elim_impₐ_ant_dneₐ : (⊢ₐ[T] ~ₐ~ₐσ ⇒ₐ π) → (⊢ₐ[T] σ ⇒ₐ π) := by aesop;
+
   lemma elim_impₐ_con_dneₐ : (⊢ₐ[T] σ ⇒ₐ ~ₐ~ₐπ) → (⊢ₐ[T] σ ⇒ₐ π) := by
     intro h;
     have h₁ := (mpₐ _).mp h;
     rw [←iff_dneₐ] at h₁;
-    exact (mpₐ T).mpr h₁;
+    aesop;
 
-  lemma disj_eq_disj : (⊢ₐ[T] σ ⋎ₐ π) ↔ ((⊢ₐ[T] σ) ∨ (⊢ₐ[T] π)) := by
-    apply Iff.intro;
-    . sorry
-    . sorry
+  axiom disj_eq_disj : (⊢ₐ[T] σ ⋎ₐ π) ↔ ((⊢ₐ[T] σ) ∨ (⊢ₐ[T] π))
 
+  @[simp]
   lemma conjₐ_eq_conj : (⊢ₐ[T] σ ⋏ₐ π) ↔ ((⊢ₐ[T] σ) ∧ (⊢ₐ[T] π)) := by
     apply Iff.intro;
-    . sorry
-    . sorry
+    . intro h;
+      -- simp [conj, disj] at h;
+      -- have h₁ := (mpₐ _).mp h;
+      sorry
+    . intro h;
+      sorry
     
   axiom nonContradictionₐ : (⊢ₐ[T] ~ₐ(σ ⋏ₐ ~ₐσ))
 
   lemma intro_conjₐ : (⊢ₐ[T] σ) → (⊢ₐ[T] π) → (⊢ₐ[T] σ ⋏ₐ π) := by 
     intro h₁ h₂;
-    simp [conjₐ_eq_conj];
+    simp only [conjₐ_eq_conj];
     exact ⟨h₁, h₂⟩;
+
   lemma conjₐ_left : (⊢ₐ[T] σ ⋏ₐ π) → (⊢ₐ[T] σ) := λ h => (conjₐ_eq_conj.mp h).left
+
   lemma conjₐ_right : (⊢ₐ[T] σ ⋏ₐ π) → (⊢ₐ[T] π) := λ h => (conjₐ_eq_conj.mp h).right
+
+  @[simp]
   axiom conjₐ_comm : (⊢ₐ[T] σ ⋏ₐ π) ↔ (⊢ₐ[T] π ⋏ₐ σ)
+
   axiom conjₐ_elim_left : (⊢ₐ[T] σ ⋏ₐ π) → (⊢ₐ[T] σ ⇒ₐ π) → (⊢ₐ[T] σ)
+
   lemma conjₐ_elim_right : (⊢ₐ[T] σ ⋏ₐ π) → (⊢ₐ[T] π ⇒ₐ σ) → (⊢ₐ[T] π) := λ h₁ h₂ => conjₐ_elim_left (conjₐ_comm.mp h₁) h₂
+  
   axiom conjₐ_contract : (⊢ₐ[T] σ ⋏ₐ σ) ↔ (⊢ₐ[T] σ)
 
   lemma elim_impₐ_ant_conjₐ_left : (⊢ₐ[T] (σ ⋏ₐ π) ⇒ₐ ρ) → (⊢ₐ[T] σ ⇒ₐ π) → (⊢ₐ[T] σ ⇒ₐ ρ) := by 
@@ -196,54 +200,50 @@ section
     rw [conjₐ_comm] at h₃;
     -/
 
-  lemma iffₐ_eq_iff : (⊢ₐ[T] σ ⇔ₐ π) ↔ ((⊢ₐ[T] σ) ↔ (⊢ₐ[T] π)) := by
-    simp [ArithmeticFormula.iff, conjₐ_eq_conj];
-    apply Iff.intro;
-    . intro h;
-      have hl := (mpₐ _).mp h.left;
-      have hr := (mpₐ _).mp h.right;
-      exact ⟨hl, hr⟩;
-    . intro h;
-      have hl := (mpₐ _).mpr h.mp;
-      have hr := (mpₐ _).mpr h.mpr;
-      exact ⟨hl, hr⟩;
-
+  @[simp]
+  lemma iffₐ_eq_iff : (⊢ₐ[T] σ ⇔ₐ π) ↔ ((⊢ₐ[T] σ) ↔ (⊢ₐ[T] π)) := by simp only [iff, conjₐ_eq_conj]; aesop;
 
   lemma intro_iffₐ : (⊢ₐ[T] σ ⇒ₐ π) → (⊢ₐ[T] π ⇒ₐ σ) → (⊢ₐ[T] σ ⇔ₐ π) := λ h₁ h₂ => intro_conjₐ h₁ h₂
 
-  lemma iffₐ_comm : (⊢ₐ[T] σ ⇔ₐ π) ↔ (⊢ₐ[T] π ⇔ₐ σ) := by
-    apply Iff.intro <;> exact λ h => iffₐ_eq_iff.mpr (Iff.comm.mp (iffₐ_eq_iff.mp h))
+  @[simp] 
+  lemma iffₐ_comm : (⊢ₐ[T] σ ⇔ₐ π) ↔ (⊢ₐ[T] π ⇔ₐ σ) := by aesop;
 
   lemma iffₐ_mp : (⊢ₐ[T] σ ⇔ₐ π) → (⊢ₐ[T] σ ⇒ₐ π) := λ h => (mpₐ _).mpr (iffₐ_eq_iff.mp h).mp
   lemma iffₐ_mpr : (⊢ₐ[T] σ ⇔ₐ π) → (⊢ₐ[T] π ⇒ₐ σ) := λ h => iffₐ_mp (iffₐ_comm.mp h)
 
   lemma iffₐ_negₐ : (⊢ₐ[T] σ ⇔ₐ π) ↔ (⊢ₐ[T] ~ₐσ ⇔ₐ ~ₐπ) := by
-    simp [ArithmeticFormula.iff, conjₐ_eq_conj];
+    simp only [iff, conjₐ_eq_conj];
     apply Iff.intro
     . intro h; exact ⟨contraposeₐ.mp h.right, contraposeₐ.mp h.left⟩;
     . intro h; exact ⟨contraposeₐ.mpr h.right, contraposeₐ.mpr h.left⟩;
-    
+
   lemma iffₐ_right : (⊢ₐ[T] σ ⇔ₐ π) → (⊢ₐ[T] σ) → (⊢ₐ[T] π) := λ h => (mpₐ _).mp (conjₐ_left h)
+
   lemma iffₐ_left : (⊢ₐ[T] σ ⇔ₐ π) → (⊢ₐ[T] π) → (⊢ₐ[T] σ) := λ h₁ h₂ => iffₐ_right (iffₐ_comm.mp h₁) h₂
+
   lemma iffₐ_negₐ_right : (⊢ₐ[T] σ ⇔ₐ π) → (⊢ₐ[T] ~ₐσ) → (⊢ₐ[T] ~ₐπ) := λ h₁ h₂ => iffₐ_right (iffₐ_negₐ.mp h₁) h₂
+  
   lemma iffₐ_negₐ_left : (⊢ₐ[T] σ ⇔ₐ π) → (⊢ₐ[T] ~ₐπ) → (⊢ₐ[T] ~ₐσ) := λ h₁ h₂ => iffₐ_left (iffₐ_negₐ.mp h₁) h₂
 
   lemma iffₐ_trans : (⊢ₐ[T] σ ⇔ₐ π) → (⊢ₐ[T] π ⇔ₐ ρ) → (⊢ₐ[T] σ ⇔ₐ ρ) := by
-    simp [ArithmeticFormula.iff];
+    simp only [iff];
     intro h₁ h₂;
     apply intro_conjₐ;
     . exact impₐ_trans (conjₐ_left h₁) (conjₐ_left h₂);
     . exact impₐ_trans (conjₐ_right h₂) (conjₐ_right h₁);
+
   lemma iffₐ_intro_impₐ_left : (⊢ₐ[T] σ ⇔ₐ π) → (⊢ₐ[T] σ ⇒ₐ π) := by
     intro h;
     rw [iffₐ_eq_iff] at h;
     exact (mpₐ _).mpr (Iff.mp h);
+
   lemma iffₐ_intro_impₐ_right : (⊢ₐ[T] σ ⇔ₐ π) → (⊢ₐ[T] π ⇒ₐ σ) := λ h => iffₐ_intro_impₐ_left (iffₐ_comm.mp h)
 
   lemma iffₐ_unprovable_left : (⊢ₐ[T] σ ⇔ₐ π) → (⊬ₐ[T] σ) → (⊬ₐ[T] π) := by
     intro h₁ h₂;
-    simp [iffₐ_eq_iff] at h₁;
+    simp only [iffₐ_eq_iff] at h₁;
     exact (h₁.not).mp h₂;
+
   lemma iffₐ_unprovable_right : (⊢ₐ[T] σ ⇔ₐ π) → (⊬ₐ[T] π) → (⊬ₐ[T] σ) := λ h₁ h₂ => iffₐ_unprovable_left (iffₐ_comm.mp h₁) h₂
   
 end
@@ -324,19 +324,27 @@ section DerivabilityConditions
 
   class Derivability1 (T : Arithmetic α) where
     D1 {σ} : (⊢ₐ[T] σ) → (⊢ₐ[T] Pr[T](σ))
+    
+  attribute [simp] Derivability1.D1 
 
   class Derivability2 (T : Arithmetic α) where
     D2 {σ π} : ⊢ₐ[T] (Pr[T](σ ⇒ₐ π)) ⇒ₐ ((Pr[T](σ)) ⇒ₐ (Pr[T](π)))
+
+  attribute [simp] Derivability2.D2
 
   lemma Derivability2.D2' {T : Arithmetic α} [Derivability2 T] : ∀ {σ π}, ⊢ₐ[T] (Pr[T](σ ⋏ₐ π)) ⇔ₐ ((Pr[T](σ)) ⋏ₐ (Pr[T](π))) := by sorry
 
   class Derivability3 (T : Arithmetic α) where
     D3 {σ} : ⊢ₐ[T] (Pr[T](σ)) ⇒ₐ (Pr[T](Pr[T](σ)))
 
+  attribute [simp] Derivability3.D3 
+
   class FormalizedSigma₁Completeness (T : Arithmetic α) where
     FS1C : ∀ {σ}, ⊢ₐ[T] (σ ⇒ₐ Pr[T](σ)) -- TODO: Σ₁という制約がない．
 
   instance [FormalizedSigma₁Completeness T] : (Derivability3 T) := ⟨FormalizedSigma₁Completeness.FS1C⟩
+
+  attribute [simp] FormalizedSigma₁Completeness.FS1C
 
 end DerivabilityConditions
 
@@ -349,6 +357,7 @@ section
     . intro h; sorry
     . intro h; sorry
 
+  @[simp]
   lemma distribute_bew : (⊢ₐ[U] Pr[T](σ ⋏ₐ π)) ↔ (⊢ₐ[U] Pr[T](σ) ⋏ₐ Pr[T](π)) := by
     apply Iff.intro;
     . intro h;
@@ -362,8 +371,9 @@ section
 
   lemma formalized_distibute_bew : (⊢ₐ[T] Pr[T](σ ⋏ₐ π) ⇔ₐ Pr[T](σ) ⋏ₐ Pr[T](π)) := by
     apply intro_iffₐ;
-    . simp [mpₐ]; apply distribute_bew.mp;
-    . simp [mpₐ]; apply distribute_bew.mpr;
+    . simp only [mpₐ]; apply distribute_bew.mp;
+    . simp only [mpₐ]; apply distribute_bew.mpr;
+    
 end
 
 end Arithmetic
