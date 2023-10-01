@@ -32,7 +32,7 @@ structure Arithmetic (α) where
   ax1 (σ π) : Provable (σ ⇒ₐ (π ⇒ₐ σ))
   ax2 (σ π ρ) : Provable ((σ ⇒ₐ (π ⇒ₐ ρ)) ⇒ₐ ((σ ⇒ₐ π) ⇒ₐ (σ ⇒ₐ ρ)))
   ax3 (σ π) : Provable ((~ₐσ ⇒ₐ ~ₐπ) ⇒ₐ (π ⇒ₐ σ))
-  mpₐ {σ π} : Provable (σ ⇒ₐ π) ↔ Provable σ → Provable π
+  mpₐ {σ π} : Provable (σ ⇒ₐ π) ↔ Provable σ → Provable π -- TODO: ↔ではない筈．
 
 notation:60 "Pr[" T "](" σ ")" => Arithmetic.bew T σ
 notation:20 "⊢ₐ[" T "] " σ => Arithmetic.Provable T σ
@@ -296,6 +296,10 @@ section ProvablilityFixedPoints
   @[simp] def GoedelSentence (G : ArithmeticFormula α) := ⊢ₐ[T] (G ⇔ₐ ~ₐPr[T](G))
   class IsGoedelSentence (T : Arithmetic α) (G : ArithmeticFormula α) where 
     goedel : GoedelSentence T G
+  class HasGoedelSentence where hasGoedel : ∃ G, GoedelSentence T G
+  lemma HasGoedelSentence_of_HasFixedPoint {T : Arithmetic α} : HasFixedPoint T → HasGoedelSentence T := by 
+    intro h;
+    exact ⟨(HasFixedPoint.hasFP (λ σ => ~ₐPr[T](σ)))⟩
 
   @[simp] def HenkinSentence (H : ArithmeticFormula α) := ⊢ₐ[T] (H ⇔ₐ Pr[T](H))
   @[simp] def JeroslowSentence (J : ArithmeticFormula α) := ⊢ₐ[T] (J ⇔ₐ Pr[T](~ₐJ))
@@ -304,12 +308,10 @@ section ProvablilityFixedPoints
   @[simp] def KreiselSentence (σ : ArithmeticFormula α) (K : ArithmeticFormula α) := ⊢ₐ[T] (K ⇔ₐ (Pr[T](K) ⇒ₐ σ))
   class IsKreiselSentence (T : Arithmetic α) (σ : ArithmeticFormula α) (K : ArithmeticFormula α) where 
     kreisel : KreiselSentence T σ K
-
-  class HasGoedelSentence where hasGoedel : ∃ G, GoedelSentence T G
-  @[simp] instance [HasFixedPoint T] : HasGoedelSentence T := ⟨(HasFixedPoint.hasFP (λ σ => ~ₐPr[T](σ)))⟩
-
   class HasKreiselSentence where hasKriesel (σ : ArithmeticFormula α) : ∃ K, KreiselSentence T σ K 
-  @[simp] instance [HasFixedPoint T] : HasKreiselSentence T := ⟨λ σ => HasFixedPoint.hasFP (λ π => (Pr[T](π) ⇒ₐ σ))⟩
+  lemma HasKreiselSentence_of_HasFixedPoint {T : Arithmetic α} : HasFixedPoint T → HasKreiselSentence T := by 
+    intro h;
+    exact ⟨λ σ => HasFixedPoint.hasFP (λ π => (Pr[T](π) ⇒ₐ σ))⟩
 
 end ProvablilityFixedPoints
 
@@ -367,7 +369,8 @@ open Arithmetic Arithmetic Derivability1
 
 variable [Derivability1 T]
 
-variable {T : Arithmetic α} {G} [hG : IsGoedelSentence T G] [HasFixedPoint T] [Derivability1 T] 
+variable {T : Arithmetic α} [Derivability1 T] 
+variable {G} [hG : IsGoedelSentence T G] 
 
 /--
   Unprovablility side of Gödel's 1st incompleteness theorem.
@@ -395,43 +398,14 @@ theorem Unrefutable_GoedelSentence_of_Soundness [hS : IsSigma₁Sounds T] : (⊬
 
   exact h₃ hRG;
 
-/-
-variable {G : ArithmeticFormula α} [GoedelSentence T G]
-
+variable [hFP : HasFixedPoint T]
 /--
-  Unprovablility side of Gödel's 1st incompleteness theorem.
+  Gödel's 1st incompleteness theorem.
 -/
-theorem Unprovable_of_HBConsistent : HBConsistent T → (⊬ₐ[T] G) := by
-  intro hC hP_G;
-
-  have hP_BG : ⊢ₐ[T] Pr[T](G) := D1 hP_G;
-
-  have hP_nG : ⊢ₐ[T] (~ₐG) := iffₐ_negₐ_left GoedelSentence.goedel (iff_dneₐ.mp hP_BG)
-
-  simp [HBConsistent, HBInconsistent] at hC;
-  exact hC G hP_G hP_nG;
-
-/--
-  Unrefutability side of Gödel's 1st incompleteness theorem.
--/
-theorem Unrefutable_of_Soundness : Sigma₁Soundness T → (⊬ₐ[T] ~ₐG) := by
-  intro hS hP_nG;
-  have hC := HBConsistent_of_Soundness hS;
-
-  have hP_BG : ⊢ₐ[T] Pr[T](G) := elim_dneₐ (iffₐ_right (iffₐ_negₐ.mp GoedelSentence.goedel) hP_nG)
-  
-  simp [Sigma₁Soundness] at hS;
-  have hP_G := hS G hP_BG;
- 
-  simp [HBConsistent, HBInconsistent] at hC;
-  exact hC G hP_G hP_nG;
-
-theorem GoedelIT1 : Sigma₁Soundness T → Incompleteness T := by
-  intro hS;
-  have h₂ :  ⊬ₐ[T] G := Unprovable_of_HBConsistent (HBConsistent_of_Soundness hS);
-  have h₃ :  ⊬ₐ[T] ~ₐG := Unrefutable_of_Soundness hS;
-  exact ⟨G, h₂, h₃⟩
--/
+theorem GoedelIT1 [hS : IsSigma₁Sounds T] : Incompleteness T := by
+  have := HBConsistent_of_Soundness hS;
+  -- have a := (HasGoedelSentence_of_HasFixedPoint hFP).hasGoedel
+  exact ⟨G, Unprovable_GoedelSentence_of_HBConsistent, Unrefutable_GoedelSentence_of_Soundness⟩
 
 end GoedelIT1
 
@@ -529,14 +503,13 @@ variable [hFP : HasFixedPoint T] [Derivability1 T] [Derivability2 T] [Derivabili
 /--
   Proof of Löb's Theorem without Gödel's 2nd incompleteness theorem.
 -/
-theorem Loeb_without_GoedelIT2 {σ K} [hK : IsKreiselSentence T σ K] : (⊢ₐ[T] σ) ↔ (⊢ₐ[T] Pr[T](σ) ⇒ₐ σ) := by
+theorem Loeb_without_GoedelIT2 {σ} : (⊢ₐ[T] σ) ↔ (⊢ₐ[T] Pr[T](σ) ⇒ₐ σ) := by
   apply Iff.intro;
   . exact λ H => impₐ_intro_con (Pr[T](σ)) H;
   . intro H;
-    -- have a : ⊢ₐ[T] K ⇔ₐ Pr[T](K) ⇒ₐ σ := KreiselSentence₂.kreisel
-    -- have ⟨K, hK⟩ := KrieselSentence T σ; 
+    have ⟨K, hK⟩ := (HasKreiselSentence_of_HasFixedPoint hFP).hasKriesel σ
     have h₁ : ⊢ₐ[T] Pr[T](K) ⇒ₐ Pr[T](Pr[T](K) ⇒ₐ σ) := by
-      have hK' := iffₐ_eq_iff.mp hK.kreisel;
+      have hK' := iffₐ_eq_iff.mp hK;
       
       -- have hK'l := hK'.mp;
       -- have hK'r := hK'.mpr;
@@ -560,16 +533,15 @@ theorem Loeb_without_GoedelIT2 {σ K} [hK : IsKreiselSentence T σ K] : (⊢ₐ[
       -- have h₃₂ := impₐ_trans h₃₁ h₂;
       sorry
     have h₄ : ⊢ₐ[T] Pr[T](K) ⇒ₐ σ := impₐ_trans h₃ H;
-    have h₅ : ⊢ₐ[T] K := (iffₐ_eq_iff.mp hK.kreisel).mpr h₄;
+    have h₅ : ⊢ₐ[T] K := (iffₐ_eq_iff.mp hK).mpr h₄;
     have h₆ : ⊢ₐ[T] Pr[T](K) := Derivability1.D1 h₅;
     have h₇ : ⊢ₐ[T] σ := (mpₐ _).mp h₄ h₆;
     exact h₇;
 
 lemma LInconsistent_of_Provable_LConsistencyOf : (⊢ₐ[T] ConL[T]) → (LInconsistent T) := by
-  sorry;
-  -- intro h₁;
-  -- have h₂ : ⊢ₐ[T] ⊥ₐ := (@Loeb_without_GoedelIT2 _ T _ _ _ _ _ _).mpr h₁;
-  -- aesop
+  intro h₁;
+  have h₂ : ⊢ₐ[T] ⊥ₐ := Loeb_without_GoedelIT2.mpr h₁;
+  aesop
 
 /--
   Another proof of unprovability side of Gödel's 2nd incompleteness theorem via Löb's Theorem.
