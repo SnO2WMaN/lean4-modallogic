@@ -110,6 +110,7 @@ class FormalizedSigma1Completeness extends Arithmetic α where
   FS1C : ∀ {σ}, ⊢ₐ[T] (σ ⇒ₐ Pr[T](σ))
 
 
+
 @[simp] def GoedelSentence (G : Sentence α) := ⊢ₐ[T] (G ⇔ₐ ~ₐPr[T](G))
 
 class HasGoedelSentence extends Arithmetic α where 
@@ -128,12 +129,9 @@ lemma HasGoedelSentence_of_HasFixedPoint {T : Arithmetic α} : HasFixedPoint T �
 class HasHenkinSentence where 
   hasHenkin : ∃ H, HenkinSentence T H
 
-
 @[simp] def JeroslowSentence (J : Sentence α) := ⊢ₐ[T] (J ⇔ₐ Pr[T](~ₐJ))
 
-
 @[simp] def NotJeroslowSentence (NJ : Sentence α) := ⊢ₐ[T] (NJ ⇔ₐ ~ₐPr[T](~ₐNJ))
-
 
 @[simp] def KreiselSentence (σ : Sentence α) (K : Sentence α) := ⊢ₐ[T] (K ⇔ₐ (Pr[T](K) ⇒ₐ σ))
 

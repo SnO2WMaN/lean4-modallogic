@@ -19,7 +19,7 @@ theorem GoedelSentenceUnprovability (hG : GoedelSentence T G) : (IsHBConsistent 
   intro hPG;
 
   have h₁ : ⊢ₐ[T] Pr[T](G) := D1 hPG;
-  have h₂ : ⊢ₐ[T] ~~Pr[T](G) := T.deducible_negneg_intro h₁;
+  have h₂ : ⊢ₐ[T] ~ₐ~ₐPr[T](G) := T.deducible_negneg_intro h₁;
   have h₃ : ⊢ₐ[T] ~ₐG := T.deducible_equiv_neg_right hG h₂;
   have h₄ : ⊬ₐ[T] ~ₐG := hConsistent G hPG;
 
