@@ -46,4 +46,7 @@ theorem LConsistencyofUnprovability_of_LConsistent : (LConsistent T) → (⊬ₐ
   have _ := LInconsistent_of_ProvabilityLconsistencyOf hPC;
   aesop;
 
+theorem HenkinQuestionProvablility (hH : HenkinSentence T H): (⊢ₐ[T] H) := by
+  exact Loeb_without_GoedelIT2.mpr (T.deducible_equiv_mpr hH);
+
 end ModalLogic.Arithmetic
