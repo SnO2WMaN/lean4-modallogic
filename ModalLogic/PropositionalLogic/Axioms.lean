@@ -7,7 +7,11 @@ variable [HasBot α] [HasImply α] [HasNeg α]
 
 @[simp] def K := (φ ⇒ (ψ ⇒ φ))
 @[simp] def S := (φ ⇒ (ψ ⇒ ξ)) ⇒ ((φ ⇒ ψ) ⇒ (φ ⇒ ξ))
-@[simp] def Con₄ := ((φ ⇒ ψ) ⇒ ((~ψ) ⇒ (~φ)))
+
+@[simp] def Con₁ := ((φ ⇒ ψ) ⇒ (~ψ ⇒ ~φ))
+@[simp] def Con₂ := ((φ ⇒ ~ψ) ⇒ (ψ ⇒ ~φ))
+@[simp] def Con₃ := ((~φ ⇒ ψ) ⇒ (~ψ ⇒ φ))
+@[simp] def Con₄ := ((~φ ⇒ ~ψ) ⇒ (ψ ⇒ φ))
 
 @[simp] def EFQ : α := ⊥ ⇒ φ 
 @[simp] def DNI : α := φ ⇒ ~~φ
@@ -26,5 +30,6 @@ variable [HasDisj α]
 @[simp] def DisjIntro₂ := (φ₂ ⇒ (φ₁ ⋎ φ₂))
 
 @[simp] def LEM (φ : α) := φ ⋎ ~φ
+@[simp] def NonContradiction := ~(φ ⋏ ~φ)
 
 end ModalLogic.PropositionalLogic.Axioms 

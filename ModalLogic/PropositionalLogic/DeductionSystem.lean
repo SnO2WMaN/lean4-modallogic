@@ -49,22 +49,22 @@ section
 variable (D : DeductionSystem α)
 
 variable [HasImply α] in
-class HasDT where
+class HasDT extends (DeductionSystem α) where
   DT {φ ψ : α} : (Γ ⊢ᵈ[D] (φ ⇒ ψ)) ↔ ((Γ ∪ {φ}) ⊢ᵈ[D] ψ)
 attribute [simp] HasDT.DT
 
 variable [HasImply α] in
-class HasMP where
+class HasMP extends (DeductionSystem α) where
   MP {φ ψ : α} : (Γ ⊢ᵈ[D] (φ ⇒ ψ)) → (Γ ⊢ᵈ[D] φ) → (Γ ⊢ᵈ[D] ψ)
 attribute [simp] HasMP.MP
 
 variable [HasImply α] [HasBot α] in
-class HasExplode where
+class HasExplode extends (DeductionSystem α) where
   Explode (φ : α) : (Γ ⊢ᵈ[D] ⊥) → (Γ ⊢ᵈ[D] φ)
 attribute [simp] HasExplode.Explode
 
 variable [HasImply α] [HasNeg α] in
-class HasDNElim where
+class HasDNElim extends (DeductionSystem α) where
   DNElim {φ : α} : (Γ ⊢ᵈ[D] ~~φ) → (Γ ⊢ᵈ[D] φ)
 attribute [simp] HasDNElim.DNElim
 
@@ -92,17 +92,6 @@ lemma deducible_S : Γ ⊢ᵈ[D] (Axioms.S φ ψ ξ) := by
   have h₆ := MP h₅ h₄;
   aesop;
 
-/-
-lemma deducible_Con₄ : ⊢ᵈ[D] (Axioms.Con₄ φ ψ) := by
-  repeat apply DT.mpr;
-  have h₁ : ({φ ⇒ ψ, ψ ⇒ ⊥, φ}) ⊢[D] φ := by simp;
-  have h₂ : ({φ ⇒ ψ, ψ ⇒ ⊥, φ}) ⊢[D] φ ⇒ ψ := by simp;
-  have h₃ : ({φ ⇒ ψ, ψ ⇒ ⊥, φ}) ⊢[D] ψ ⇒ ⊥ := by simp;
-  have h₄ := MP h₂ h₁;
-  have h₅ := MP h₃ h₄;
-  aesop;
--/
-
 @[simp]
 lemma deducible_DNI : Γ ⊢ᵈ[D] (Axioms.DNI φ) := by
   simp;
@@ -112,12 +101,15 @@ lemma deducible_DNI : Γ ⊢ᵈ[D] (Axioms.DNI φ) := by
   have h₃ := MP h₂ h₁;
   aesop;
 
-
 lemma deducible_imply_trans : ((Γ ⊢ᵈ[D] (φ ⇒ ψ)) ∧ (Γ ⊢ᵈ[D] (ψ ⇒ ξ))) → (Γ ⊢ᵈ[D] (φ ⇒ ξ)) := by
   intro H₁;
-  have ⟨H₁l, H₁r⟩ := H₁; 
-  have H₂ := λ h => MP H₁.right (MP H₁.left h);
-  sorry
+  repeat apply DT.mpr;
+  have H₁l : (Γ ∪ {φ}) ⊢ᵈ[D] φ ⇒ ψ := H₁.left;
+  have H₁r : (Γ ∪ {φ}) ⊢ᵈ[D] ψ ⇒ ξ := H₁.right;
+  have h₁ : (Γ ∪ {φ}) ⊢ᵈ[D] φ := by simp;
+  have h₂ := MP H₁l h₁;
+  have h₃ := MP H₁r h₂;
+  aesop;
 
 lemma deducible_contrapose₁ : (Γ ⊢ᵈ[D] (φ ⇒ ψ)) → (Γ ⊢ᵈ[D] (~ψ ⇒ ~φ)) := by
   intro H₁;
@@ -132,21 +124,34 @@ lemma deducible_contrapose₁ : (Γ ⊢ᵈ[D] (φ ⇒ ψ)) → (Γ ⊢ᵈ[D] (~�
   have h₄ := MP h₁ h₃;
   aesop;
 
+lemma deducible_Con₁ : Γ ⊢ᵈ[D] (Axioms.Con₁ φ ψ) := by
+  repeat apply DT.mpr;
+  have h₁ : (Γ ∪ {φ ⇒ ψ, ~ψ}) ⊢ᵈ[D] φ ⇒ ψ := by simp;
+  have h₂ : (Γ ∪ {φ ⇒ ψ, ~ψ}) ⊢ᵈ[D] ~ψ := by simp;
+  have h₃ := deducible_contrapose₁ h₁;
+  have h₄ := MP h₃ h₂;
+  aesop;
+
 lemma deducible_contrapose₂ : (Γ ⊢ᵈ[D] (φ ⇒ ~ψ)) → (Γ ⊢ᵈ[D] (ψ ⇒ ~φ)) := by
   intro H₁;
-  simp [HasNegDef.NegDef];
+  simp only [HasNegDef.NegDef];
   
   repeat apply DT.mpr;
 
-  have H₁ : (Γ ∪ {φ, ψ}) ⊢ᵈ[D] φ ⇒ ~ψ := H₁;
-  have h₁ : (Γ ∪ {φ, ψ}) ⊢ᵈ[D] φ := by simp;
-  have h₂ : (Γ ∪ {φ, ψ}) ⊢ᵈ[D] ψ := by simp;
+  have H₁ : (Γ ∪ {ψ} ∪ {φ}) ⊢ᵈ[D] φ ⇒ ~ψ := H₁;
+  have h₁ : (Γ ∪ {ψ} ∪ {φ}) ⊢ᵈ[D] φ := by simp;
+  have h₂ : (Γ ∪ {ψ} ∪ {φ}) ⊢ᵈ[D] ψ := by simp;
   have h₃ := MP H₁ h₁;
   simp only [HasNegDef.NegDef] at h₃;
-  have h₄ := MP h₃ h₂;
-  sorry;
-  -- aesop;
+  exact MP h₃ h₂;
 
+lemma deducible_Con₂ : Γ ⊢ᵈ[D] (Axioms.Con₂ φ ψ) := by
+  repeat apply DT.mpr;
+  have h₁ : (Γ ∪ {φ ⇒ ~ψ} ∪ {ψ}) ⊢ᵈ[D] φ ⇒ ~ψ := by simp;
+  have h₂ : (Γ ∪ {φ ⇒ ~ψ} ∪ {ψ}) ⊢ᵈ[D] ψ := by simp;
+  have h₃ := deducible_contrapose₂ h₁;
+  exact MP h₃ h₂;
+  
 lemma deducible_negneg_intro : (Γ ⊢ᵈ[D] (φ)) → (Γ ⊢ᵈ[D] (~~φ)) := λ H => MP deducible_DNI H
 
 variable [HasExplode D] 
@@ -163,20 +168,26 @@ lemma deducible_LEM : Γ ⊢ᵈ[D] (Axioms.LEM φ) := by
 
 lemma deducible_contrapose₃ : (Γ ⊢ᵈ[D] (~φ ⇒ ψ)) → (Γ ⊢ᵈ[D] (~ψ ⇒ φ)) := by
   intro H₁;
+  
   repeat apply DT.mpr;
   have h₁ : {~ψ} ⊢ᵈ[D] ~ψ := by simp;
+  
   sorry
 
 lemma deducible_contrapose₄ : (Γ ⊢ᵈ[D] (~φ ⇒ ~ψ)) → (Γ ⊢ᵈ[D] (ψ ⇒ φ)) := by
   intro H₁;
   sorry
 
-lemma deducible_imply_elim_ant_dne : (Γ ⊢ᵈ[D] (~~φ ⇒ ψ)) → (Γ ⊢ᵈ[D] (φ ⇒ ψ)) := sorry
+lemma deducible_imply_elim_ant_dne : (Γ ⊢ᵈ[D] (~~φ ⇒ ψ)) → (Γ ⊢ᵈ[D] (φ ⇒ ψ)) := by
+  intro H₁;
+  exact deducible_contrapose₄ (deducible_contrapose₃ H₁);
 
-lemma deducible_imply_elim_con_dne : (Γ ⊢ᵈ[D] (φ ⇒ ~~ψ)) → (Γ ⊢ᵈ[D] (φ ⇒ ψ)) := sorry
+lemma deducible_imply_elim_con_dne : (Γ ⊢ᵈ[D] (φ ⇒ ~~ψ)) → (Γ ⊢ᵈ[D] (φ ⇒ ψ)) := by
+  intro H₁;
+  exact deducible_contrapose₄ (deducible_contrapose₂ H₁);
 
-lemma deducible_disj_distribute : (⊢ᵈ[D] (φ ⋎ ψ)) → ((⊢ᵈ[D] φ) ∨ (⊢ᵈ[D] ψ)) := by
-  simp [HasDisjDef.DisjDef];
+lemma deducible_disj_distribute : (Γ ⊢ᵈ[D] (φ ⋎ ψ)) → ((Γ ⊢ᵈ[D] φ) ∨ (Γ ⊢ᵈ[D] ψ)) := by
+  simp only [HasDisjDef.DisjDef];
   intro h;
   have h₁ := @MP _ D _ _ ∅ (φ ⇒ ⊥) ψ
   have h₂ := h₁;
@@ -201,7 +212,7 @@ lemma deducible_conj_intro : ((Γ ⊢ᵈ[D] φ) ∧ (Γ ⊢ᵈ[D] ψ)) → (Γ �
 
 @[simp]
 lemma deducible_conj_left : (Γ ⊢ᵈ[D] (φ ⋏ ψ)) → (Γ ⊢ᵈ[D] φ) := by 
-  simp [HasConjDef.ConjDef];
+  simp only [HasConjDef.ConjDef];
   intro H;
   
   -- apply toProves_def;
@@ -227,8 +238,7 @@ lemma deducible_conj_left : (Γ ⊢ᵈ[D] (φ ⋏ ψ)) → (Γ ⊢ᵈ[D] φ) := 
 @[simp]
 lemma deducible_conj_comm : (Γ ⊢ᵈ[D] (φ ⋏ ψ)) → (Γ ⊢ᵈ[D] (ψ ⋏ φ)) := by
   intro H;
-  
-  simp [HasConjDef.ConjDef];
+  simp only [HasConjDef.ConjDef, HasNegDef.NegDef];
   
   repeat apply DT.mpr;
 
@@ -253,6 +263,15 @@ lemma deducible_conj_contract : (Γ ⊢ᵈ[D] φ ⋏ φ) ↔ (Γ ⊢ᵈ[D] φ) :
   . intro H;
     exact deducible_conj_intro ⟨H, H⟩;
 
+@[simp]
+lemma deducible_NonContradiction {φ} : (Γ ⊢ᵈ[D] (Axioms.NonContradiction φ)) := by
+  simp only [Axioms.NonContradiction, HasNegDef.NegDef];
+  repeat apply DT.mpr;
+  have h₁ : (Γ ∪ {φ ⋏ φ ⇒ ⊥}) ⊢ᵈ[D] φ ⋏ φ ⇒ ⊥ := by simp;
+  have h₁l := deducible_conj_left h₁;
+  have h₁r := deducible_conj_right h₁;
+  exact MP h₁r h₁l;
+
 variable [HasEquiv α] [HasEquivDef α]
 
 attribute [simp] HasEquivDef.EquivDef
@@ -275,7 +294,12 @@ lemma deducible_equiv_mpr : (Γ ⊢ᵈ[D] (φ ⇔ ψ)) → (Γ ⊢ᵈ[D] ψ ⇒ 
   exact deducible_equiv_mp (deducible_equiv_comm H);
 
 @[simp]
-lemma deducible_equiv_neg : (Γ ⊢ᵈ[D] (φ ⇔ ψ)) → (Γ ⊢ᵈ[D] ((~φ : α) ⇔ ~ψ)) := by sorry
+lemma deducible_equiv_neg : (Γ ⊢ᵈ[D] (φ ⇔ ψ)) → (Γ ⊢ᵈ[D] ((~φ : α) ⇔ ~ψ)) := by 
+  intro h;
+  apply deducible_equiv_intro;
+  apply And.intro;
+  . exact deducible_contrapose₁ (deducible_equiv_mpr h);
+  . exact deducible_contrapose₁ (deducible_equiv_mp h); 
 
 lemma deducible_equiv_eq : (Γ ⊢ᵈ[D] (φ ⇔ ψ)) ↔ ((Γ ⊢ᵈ[D] φ) ↔ (Γ ⊢ᵈ[D] ψ)) := by
   apply Iff.intro;
@@ -288,11 +312,10 @@ lemma deducible_equiv_eq : (Γ ⊢ᵈ[D] (φ ⇔ ψ)) ↔ ((Γ ⊢ᵈ[D] φ) ↔
       have hmpr := deducible_equiv_mpr H;
       exact MP hmpr h;
   . intro H;
-    simp;
-    apply deducible_conj_intro;
+    apply deducible_equiv_intro;
     apply And.intro;
-    . sorry;
-    . sorry;
+    . have h := H.mp; sorry
+    . have h := H.mpr; sorry
 
 lemma deducible_equiv_left : (Γ ⊢ᵈ[D] (φ ⇔ ψ)) → (Γ ⊢ᵈ[D] φ) → (Γ ⊢ᵈ[D] ψ) := by
   intro H₁ H₂;
@@ -305,7 +328,7 @@ lemma deducible_equiv_right : (Γ ⊢ᵈ[D] (φ ⇔ ψ)) → (Γ ⊢ᵈ[D] ψ) �
 
 lemma deducible_equiv_neg_left : (Γ ⊢ᵈ[D] (φ ⇔ ψ)) → (Γ ⊢ᵈ[D] (~φ)) → (Γ ⊢ᵈ[D] (~ψ)) := by
   intro H₁ H₂;
-  sorry
+  exact MP (deducible_equiv_mp (deducible_equiv_neg H₁)) H₂;
   
 lemma deducible_equiv_neg_right : (Γ ⊢ᵈ[D] (φ ⇔ ψ)) → (Γ ⊢ᵈ[D] (~ψ)) → (Γ ⊢ᵈ[D] (~φ)) := by
   intro H₁ H₂
@@ -322,6 +345,13 @@ lemma deducible_equiv_trans : (Γ ⊢ᵈ[D] (φ ⇔ ψ)) → (Γ ⊢ᵈ[D] (ψ �
   . have H₁ := deducible_equiv_mpr H₁;
     have H₂ := deducible_equiv_mpr H₂;
     exact deducible_imply_trans ⟨H₂, H₁⟩;
+
+lemma deducible_dilemma : ((Γ ⊢ᵈ[D] (φ ⋎ ψ)) ∧ (Γ ⊢ᵈ[D] (φ ⇒ ψ))) → (Γ ⊢ᵈ[D] ψ) := by
+  intro H₁;
+  have ⟨H₁l, H₁r⟩ := H₁;
+  cases (deducible_disj_distribute H₁l) with
+  | inl h₁ => exact MP H₁r h₁
+  | inr h₁ => exact h₁;
 
 lemma undeducible_equiv_left : (Γ ⊢ᵈ[D] (φ ⇔ ψ)) → (Γ ⊬ᵈ[D] φ) → (Γ ⊬ᵈ[D] ψ) := by
   intro H₁ H₂;
