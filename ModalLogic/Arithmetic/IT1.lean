@@ -1,7 +1,7 @@
 import Aesop
 import ModalLogic.Arithmetic.Notation
 
-open ModalLogic.PropositionalLogic.DeductionSystem
+open ModalLogic.PropositionalLogic DeductionSystem
 open ModalLogic.Arithmetic.Arithmetic Derivability1
 
 namespace ModalLogic.Arithmetic
@@ -39,7 +39,7 @@ theorem GoedelSentenceUnrefutability (hG : GoedelSentence T G) : (IsSigma1Sounds
   intro hRG;
 
   have h₁ := deducible_equiv_left (deducible_equiv_neg hG) hRG;
-  have h₂ : ⊢ₐ[T] Pr[T](G) := deducible_negneg_elim h₁;
+  have h₂ : ⊢ₐ[T] Pr[T](G) := HasDNElim.DNElim h₁;
   have h₃ : ⊢ₐ[T] G :=  hSounds.Sigma1Sounds G h₂;
   have h₄ : ⊬ₐ[T] ~ₐG := hConsistent G h₃;
 

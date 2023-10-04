@@ -1,7 +1,9 @@
 import Aesop
 import ModalLogic.Arithmetic.Notation
 
-open ModalLogic.PropositionalLogic.DeductionSystem
+open ModalLogic.PropositionalLogic 
+open ModalLogic.PropositionalLogic.Axioms
+open ModalLogic.PropositionalLogic.DeductionSystem HasMP
 open ModalLogic.Arithmetic.Arithmetic Derivability1 Derivability2 Derivability3
 
 namespace ModalLogic.Arithmetic
@@ -19,17 +21,16 @@ theorem Loeb_without_GoedelIT2 {σ} : (⊢ₐ[T] σ) ↔ (⊢ₐ[T] Pr[T](σ) �
   . intro H;
     have ⟨K, hK⟩ := @existsKreiselSentence _ T _ σ;
     simp only [KreiselSentence] at hK;
-    have h₁ : ⊢ₐ[T] K ⇒ₐ Pr[T](K) ⇒ₐ σ := sorry; -- T.deducible_equiv_mp hK;
     have h₁ : ⊢ₐ[T] K ⇒ₐ (Pr[T](K) ⇒ₐ σ) := deducible_equiv_mp hK;
     have h₂ : ⊢ₐ[T] K ⇒ₐ Pr[T](K) := sorry -- (mpₐ _).mpr D1;
     have h₃ : ⊢ₐ[T] (K ⇒ₐ Pr[T](K)) ⇒ₐ (K ⇒ₐ σ) := sorry; -- T.deducible_MP h₁ h₂;
     
-    have h₄ : ⊢ₐ[T] K ⇒ₐ σ := deducible_MP h₃ h₂;
-    have h₅ : ⊢ₐ[T] Pr[T](K) ⇒ₐ Pr[T](σ) := T.deducible_MP D2 (D1 h₄);
+    have h₄ : ⊢ₐ[T] K ⇒ₐ σ := MP h₃ h₂;
+    have h₅ : ⊢ₐ[T] Pr[T](K) ⇒ₐ Pr[T](σ) := MP D2 (D1 h₄);
     have h₆ : ⊢ₐ[T] Pr[T](K) ⇒ₐ σ := T.deducible_imply_trans ⟨h₅, H⟩;
     have h₇ : ⊢ₐ[T] K := (deducible_equiv_eq.mp hK).mpr h₆;
     have h₈ : ⊢ₐ[T] Pr[T](K) := D1 h₇;
-    have h₉ : ⊢ₐ[T] σ := deducible_MP h₆ h₈;
+    have h₉ : ⊢ₐ[T] σ := MP h₆ h₈;
     assumption;
 
 lemma LInconsistent_of_ProvabilityLconsistencyOf : (⊢ₐ[T] ConL[T]) → (LInconsistent T) := by

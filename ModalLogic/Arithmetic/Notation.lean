@@ -1,6 +1,6 @@
 import ModalLogic.PropositionalLogic.DeductionSystem
 
-open ModalLogic.PropositionalLogic 
+open ModalLogic.PropositionalLogic DeductionSystem
 
 namespace ModalLogic.Arithmetic
 
@@ -60,8 +60,16 @@ notation "Pr[" T "](" σ ")" => Arithmetic.Provable T σ
 
 def Arithmetic.Proves_def (T : Arithmetic α) (σ : Sentence α) := T.Proves σ
 
-notation:20 "⊢ₐ[" T "] " σ => Arithmetic.Proves_def T σ 
+def Arithmetic.Deducible_def (T : Arithmetic α) (Γ σ) := T.Deducts Γ σ
+
+notation:20 "⊢ₐ[" T " + " Γ "] " σ => Arithmetic.Deducible_def T Γ σ
+notation:20 "⊬ₐ[" T " + " Γ "] " σ => ¬(⊢[T + Γ] σ)
+
+notation:20 "⊢ₐ[" T "] " σ => Arithmetic.Deducible_def T ∅ σ
 notation:20 "⊬ₐ[" T "] " σ => ¬(⊢ₐ[T] σ)
+
+-- notation:20 "⊢ₐ[" T "] " σ => Arithmetic.Proves_def T σ 
+
 
 namespace Arithmetic
 
@@ -98,13 +106,13 @@ class IsGConsistent extends Arithmetic α where
 
 
 class Derivability1 extends Arithmetic α where
-  D1 : ∀ {σ}, (T.Proves σ) → (T.Proves (Pr[T](σ)))
+  D1 : ∀ {σ}, (⊢ₐ[T] σ) → (⊢ₐ[T] (Pr[T](σ)))
 
 class Derivability2 extends Arithmetic α where
-  D2 : ∀ {σ π}, T.Proves (Pr[T](σ ⇒ₐ π) ⇒ₐ (Pr[T](σ) ⇒ₐ Pr[T](π)))
+  D2 : ∀ {σ π}, ⊢ₐ[T] (Pr[T](σ ⇒ₐ π) ⇒ₐ (Pr[T](σ) ⇒ₐ Pr[T](π)))
 
 class Derivability3 extends Arithmetic α where
-  D3 : ∀ {σ}, T.Proves ((Pr[T](σ)) ⇒ₐ Pr[T](Pr[T](σ)))
+  D3 : ∀ {σ}, ⊢ₐ[T] ((Pr[T](σ)) ⇒ₐ Pr[T](Pr[T](σ)))
 
 class FormalizedSigma1Completeness extends Arithmetic α where
   FS1C : ∀ {σ}, ⊢ₐ[T] (σ ⇒ₐ Pr[T](σ))

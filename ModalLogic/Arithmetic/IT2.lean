@@ -2,8 +2,9 @@ import Aesop
 import ModalLogic.Arithmetic.Notation
 import ModalLogic.Arithmetic.IT1
 
+open ModalLogic.PropositionalLogic 
 open ModalLogic.PropositionalLogic.Axioms
-open ModalLogic.PropositionalLogic.DeductionSystem
+open ModalLogic.PropositionalLogic.DeductionSystem HasMP
 open ModalLogic.Arithmetic.Arithmetic Derivability1 Derivability2
 
 namespace ModalLogic.Arithmetic
@@ -16,7 +17,7 @@ variable [Derivability1 T] [Derivability2 T] [FormalizedSigma1Completeness T]
 lemma GoedelIT2.lem1 : ∀ (σ : Sentence α), ⊢ₐ[T] (~ₐPr[T](σ) ⇒ₐ ConL[T]) := by
   intro σ; 
   have h₁ : ⊢ₐ[T] Pr[T](⊥ₐ ⇒ₐ σ) := D1 (T.deducible_EFQ σ);
-  have h₂ : ⊢ₐ[T] (Pr[T](⊥ₐ) ⇒ₐ Pr[T](σ)) := deducible_MP D2 h₁;
+  have h₂ : ⊢ₐ[T] (Pr[T](⊥ₐ) ⇒ₐ Pr[T](σ)) := MP D2 h₁;
   have h₃ : ⊢ₐ[T] ~ₐPr[T](σ) ⇒ₐ ~ₐPr[T](⊥ₐ) := deducible_contrapose₁ h₂;
   exact h₃;
 
@@ -27,26 +28,24 @@ lemma GoedelIT2.lem2
   . sorry
   . sorry
 
-variable {hG : GoedelSentence T G}
-lemma GoedelIT2.lem3 : ⊢ₐ[T] (ConL[T] ⇒ₐ ~ₐPr[T](G)) := by
+lemma GoedelIT2.lem3 (hG : GoedelSentence T G): ⊢ₐ[T] (ConL[T] ⇒ₐ ~ₐPr[T](G)) := by
   have h₁ : ⊢ₐ[T] ~ₐG ⇒ₐ Pr[T](~ₐG) := FormalizedSigma1Completeness.FS1C;
-  have h₂ : ⊢ₐ[T] ~ₐ~ₐPr[T](G) ⇒ₐ ~ₐG := T.deducible_contrapose₁ (deducible_equiv_mp hG);
+  have h₂ : ⊢ₐ[T] ~ₐ~ₐPr[T](G) ⇒ₐ ~ₐG := deducible_contrapose₁ (deducible_equiv_mp hG);
   have h₃ : ⊢ₐ[T] ~ₐ~ₐPr[T](G) ⇒ₐ Pr[T](~ₐG) := deducible_imply_trans (⟨h₂, h₁⟩);
-  have h₄ : ⊢ₐ[T] Pr[T](G) ⇒ₐ Pr[T](~ₐG) := deducible_imply_elim_ant_dne h₃;
-  exact (GoedelIT2.lem2 T (by simp)).mpr h₄; 
+  have h₄ : ⊢ₐ[T] Pr[T](G) ⇒ₐ Pr[T](~ₐG) := sorry; -- deducible_imply_elim_ant_dne h₃;
+  exact (GoedelIT2.lem2 T (by simp)).mpr h₄;
 
 @[simp]
 theorem equiv_LConsistencyOf_GoedelSentence (hG : GoedelSentence T G) : ⊢ₐ[T] (G ⇔ₐ ConL[T]) := by
   have h₁ : ⊢ₐ[T] (~ₐPr[T](G) ⇒ₐ ConL[T]) := GoedelIT2.lem1 G;
-  have h₂ : ⊢ₐ[T] (ConL[T] ⇒ₐ ~ₐPr[T](G)) := sorry;
-  have h₃ : ⊢ₐ[T] (~ₐPr[T](G) ⇔ₐ ConL[T]) := sorry;
-  have h₄ := T.deducible_equiv_trans hG h₃;
-  exact h₄;
+  have h₂ : ⊢ₐ[T] (ConL[T] ⇒ₐ ~ₐPr[T](G)) := GoedelIT2.lem3 hG;
+  have h₃ : ⊢ₐ[T] (~ₐPr[T](G) ⇔ₐ ConL[T]) := deducible_equiv_intro ⟨h₁, h₂⟩;
+  exact deducible_equiv_trans hG h₃;
 
 /--
   Unprovability side of Gödel's 2nd incompleteness theorem.
 -/
-theorem Unprovable_LConsistencyOf_of_HBConsistent : (IsHBConsistent T) → (⊬ₐ[T] ConL[T]) := by
+theorem LConsistencyOfUnprovablility_of_HBConsistent : (IsHBConsistent T) → (⊬ₐ[T] ConL[T]) := by
   intro hConsistent;
   have ⟨G, hG⟩ := T.existsGoedelSentence;
   have h₁ : ⊢ₐ[T] G ⇔ₐ ConL[T] := equiv_LConsistencyOf_GoedelSentence hG;
@@ -56,7 +55,7 @@ theorem Unprovable_LConsistencyOf_of_HBConsistent : (IsHBConsistent T) → (⊬�
 /--
   Unrefutability side of Gödel's 2nd incompleteness theorem.
 -/
-theorem Unrefutable_LConsistencyOf_of_Soundness : (IsSigma1Sounds T) → (⊬ₐ[T] ~ₐConL[T]) := by
+theorem LConsistencyOfUnrefutability_of_Soundness : (IsSigma1Sounds T) → (⊬ₐ[T] ~ₐConL[T]) := by
   intro hSounds;
   have ⟨G, hG⟩ := T.existsGoedelSentence;
   have h₁ : ⊢ₐ[T] ~ₐG ⇔ₐ ~ₐConL[T] := deducible_equiv_neg (equiv_LConsistencyOf_GoedelSentence hG)
