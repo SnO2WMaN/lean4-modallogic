@@ -3,63 +3,70 @@ import ModalLogic.Arithmetic.Notation
 import ModalLogic.Arithmetic.IT1
 
 open ModalLogic.PropositionalLogic 
-open ModalLogic.PropositionalLogic.Axioms
-open ModalLogic.PropositionalLogic.DeductionSystem HasMP
+open Axioms
+open DeductionSystem HasMP
 open ModalLogic.Arithmetic.Arithmetic Derivability1 Derivability2
 
 namespace ModalLogic.Arithmetic
 
-variable [DecidableEq α] {T : Arithmetic α}
+variable [DecidableEq α]
+variable {T : Arithmetic α} {Γ : Context (Sentence α)}
 variable [HasDT T.toDeductionSystem] [HasMP T.toDeductionSystem] [HasExplode T.toDeductionSystem] [HasDNElim T.toDeductionSystem]
-variable [HasFixedPoint T] [HasGoedelSentence T]
-variable [Derivability1 T] [Derivability2 T] [FormalizedSigma1Completeness T]
+variable [HasFixedPoint T Γ] [HasGoedelSentence T Γ]
+variable [Derivability1 T Γ] [Derivability2 T Γ] [FormalizedSigma1Completeness T Γ]
 
-lemma GoedelIT2.lem1 : ∀ (σ : Sentence α), ⊢ₐ[T] (~ₐPr[T](σ) ⇒ₐ ConL[T]) := by
+lemma GoedelIT2.lem1 : ∀ (σ : Sentence α), ⊢ₐ[T ∔ Γ] (~ₐPr[T ∔ Γ](σ) ⇒ₐ ConL[T ∔ Γ]) := by
   intro σ; 
-  have h₁ : ⊢ₐ[T] Pr[T](⊥ₐ ⇒ₐ σ) := D1 (T.deducible_EFQ σ);
-  have h₂ : ⊢ₐ[T] (Pr[T](⊥ₐ) ⇒ₐ Pr[T](σ)) := MP D2 h₁;
-  have h₃ : ⊢ₐ[T] ~ₐPr[T](σ) ⇒ₐ ~ₐPr[T](⊥ₐ) := deducible_contrapose₁ h₂;
+  have h₁ : ⊢ₐ[T ∔ Γ] Pr[T ∔ Γ](⊥ₐ ⇒ₐ σ) := D1 (T.deducible_EFQ σ);
+  have h₂ : ⊢ₐ[T ∔ Γ] (Pr[T ∔ Γ](⊥ₐ) ⇒ₐ Pr[T ∔ Γ](σ)) := MP D2 h₁;
+  have h₃ : ⊢ₐ[T ∔ Γ] ~ₐPr[T ∔ Γ](σ) ⇒ₐ ~ₐPr[T ∔ Γ](⊥ₐ) := deducible_contrapose₁ h₂;
   exact h₃;
 
 lemma GoedelIT2.lem2
-  (U : Arithmetic α) (hTU : ∀ {σ}, (⊢ₐ[T] σ) → (⊢ₐ[U] σ))
-  : (⊢ₐ[U] (ConL[T] ⇒ₐ ~ₐPr[T](σ))) ↔ (⊢ₐ[U] (Pr[T](σ) ⇒ₐ Pr[T](~ₐσ))) := by
+  (U : Arithmetic α) (Δ : Context (Sentence α)) [HasMP U.toDeductionSystem] [HasDT U.toDeductionSystem] (hTU : ∀ {σ}, (⊢ₐ[T ∔ Γ] σ) → (⊢ₐ[U ∔ Δ] σ))
+  : (⊢ₐ[U ∔ Δ] (ConL[T ∔ Γ] ⇒ₐ ~ₐPr[T ∔ Γ](σ))) ↔ (⊢ₐ[U ∔ Δ] (Pr[T ∔ Γ](σ) ⇒ₐ Pr[T ∔ Γ](~ₐσ))) := by
   apply Iff.intro;
-  . sorry
-  . sorry
+  . intro H;
+    have h₁ : ⊢ₐ[U ∔ Δ] ~ₐPr[T ∔ Γ](~ₐσ) ⇒ₐ ConL[T ∔ Γ] := hTU (GoedelIT2.lem1 (~ₐσ));
+    have h₂ : ⊢ₐ[U ∔ Δ] ~ₐPr[T ∔ Γ](~ₐσ) ⇒ ~ₐPr[T ∔ Γ](σ) := deducible_imply_trans ⟨h₁, H⟩;
+    exact U.deducible_contrapose₄ h₂;
+  . intro H;
+    have h₁ : ⊢ₐ[T ∔ Γ] (σ ⋏ₐ ~ₐσ) ⇒ₐ ⊥ₐ := T.deducible_NonContradiction;
+    have h₂ : ⊢ₐ[T ∔ Γ] (Pr[T ∔ Γ](σ ⋏ₐ ~ₐσ) ⇒ₐ Pr[T ∔ Γ](⊥ₐ)) := MP D2 (D1 h₁);
+    have h₃ : ⊢ₐ[T ∔ Γ] ((Pr[T](σ) ⋏ₐ Pr[T](~ₐσ)) ⇒ₐ Pr[T](⊥ₐ)) := by sorry;
+    have h₄ := hTU h₃;
+    have h₅ : ⊢ₐ[U ∔ Δ] Pr[T ∔ Γ](σ) ⇒ₐ Pr[T ∔ Γ](⊥ₐ) := by sorry
+    exact U.deducible_contrapose₁ h₅;
 
-lemma GoedelIT2.lem3 (hG : GoedelSentence T G): ⊢ₐ[T] (ConL[T] ⇒ₐ ~ₐPr[T](G)) := by
-  have h₁ : ⊢ₐ[T] ~ₐG ⇒ₐ Pr[T](~ₐG) := FormalizedSigma1Completeness.FS1C;
-  have h₂ : ⊢ₐ[T] ~ₐ~ₐPr[T](G) ⇒ₐ ~ₐG := deducible_contrapose₁ (deducible_equiv_mp hG);
-  have h₃ : ⊢ₐ[T] ~ₐ~ₐPr[T](G) ⇒ₐ Pr[T](~ₐG) := deducible_imply_trans (⟨h₂, h₁⟩);
-  have h₄ : ⊢ₐ[T] Pr[T](G) ⇒ₐ Pr[T](~ₐG) := sorry; -- deducible_imply_elim_ant_dne h₃;
-  exact (GoedelIT2.lem2 T (by simp)).mpr h₄;
+lemma GoedelIT2.lem3 (hG : GoedelSentence T Γ G ): ⊢ₐ[T ∔ Γ] (ConL[T ∔ Γ] ⇒ₐ ~ₐPr[T ∔ Γ](G)) := by
+  have h₁ : ⊢ₐ[T ∔ Γ] ~ₐG ⇒ₐ Pr[T ∔ Γ](~ₐG) := FormalizedSigma1Completeness.FS1C;
+  have h₂ : ⊢ₐ[T ∔ Γ] ~ₐ~ₐPr[T ∔ Γ](G) ⇒ₐ ~ₐG := deducible_contrapose₁ (deducible_equiv_mp hG);
+  have h₃ : ⊢ₐ[T ∔ Γ] ~ₐ~ₐPr[T ∔ Γ](G) ⇒ₐ Pr[T ∔ Γ](~ₐG) := deducible_imply_trans (⟨h₂, h₁⟩);
+  have h₄ : ⊢ₐ[T ∔ Γ] Pr[T ∔ Γ](G) ⇒ₐ Pr[T ∔ Γ](~ₐG) := deducible_imply_elim_ant_dne h₃;
+  exact (GoedelIT2.lem2 T Γ (by simp)).mpr h₄;
 
+/-- Every Gödel sentence is equivalent to sentence expresses Löb Consistency of T -/
 @[simp]
-theorem equiv_LConsistencyOf_GoedelSentence (hG : GoedelSentence T G) : ⊢ₐ[T] (G ⇔ₐ ConL[T]) := by
-  have h₁ : ⊢ₐ[T] (~ₐPr[T](G) ⇒ₐ ConL[T]) := GoedelIT2.lem1 G;
-  have h₂ : ⊢ₐ[T] (ConL[T] ⇒ₐ ~ₐPr[T](G)) := GoedelIT2.lem3 hG;
-  have h₃ : ⊢ₐ[T] (~ₐPr[T](G) ⇔ₐ ConL[T]) := deducible_equiv_intro ⟨h₁, h₂⟩;
+theorem equiv_LConsistencyOf_GoedelSentence (hG : GoedelSentence T Γ G) : ⊢ₐ[T ∔ Γ] (G ⇔ₐ ConL[T ∔ Γ]) := by
+  have h₁ : ⊢ₐ[T ∔ Γ] (~ₐPr[T ∔ Γ](G) ⇒ₐ ConL[T ∔ Γ]) := GoedelIT2.lem1 G;
+  have h₂ : ⊢ₐ[T ∔ Γ] (ConL[T ∔ Γ] ⇒ₐ ~ₐPr[T ∔ Γ](G)) := GoedelIT2.lem3 hG;
+  have h₃ : ⊢ₐ[T ∔ Γ] (~ₐPr[T ∔ Γ](G) ⇔ₐ ConL[T ∔ Γ]) := deducible_equiv_intro ⟨h₁, h₂⟩;
   exact deducible_equiv_trans hG h₃;
 
-/--
-  Unprovability side of Gödel's 2nd incompleteness theorem.
--/
-theorem LConsistencyOfUnprovablility_of_HBConsistent : (IsHBConsistent T) → (⊬ₐ[T] ConL[T]) := by
+/-- Unprovability side of Gödel's 2nd incompleteness theorem. -/
+theorem LConsistencyOfUnprovablility_of_HBConsistent : (IsHBConsistent T Γ) → (⊬ₐ[T ∔ Γ] ConL[T ∔ Γ]) := by
   intro hConsistent;
-  have ⟨G, hG⟩ := T.existsGoedelSentence;
-  have h₁ : ⊢ₐ[T] G ⇔ₐ ConL[T] := equiv_LConsistencyOf_GoedelSentence hG;
-  have h₂ : ⊬ₐ[T] G := GoedelSentenceUnprovability hG hConsistent;
+  have ⟨G, hG⟩ := T.existsGoedelSentence Γ;
+  have h₁ : ⊢ₐ[T ∔ Γ] G ⇔ₐ ConL[T ∔ Γ] := equiv_LConsistencyOf_GoedelSentence hG;
+  have h₂ : ⊬ₐ[T ∔ Γ] G := GoedelSentenceUnprovability hG hConsistent;
   exact undeducible_equiv_left h₁ h₂;
 
-/--
-  Unrefutability side of Gödel's 2nd incompleteness theorem.
--/
-theorem LConsistencyOfUnrefutability_of_Soundness : (IsSigma1Sounds T) → (⊬ₐ[T] ~ₐConL[T]) := by
+/-- Unrefutability side of Gödel's 2nd incompleteness theorem. -/
+theorem LConsistencyOfUnrefutability_of_Soundness : (IsSigma1Sounds T Γ) → (⊬ₐ[T ∔ Γ] ~ₐConL[T ∔ Γ]) := by
   intro hSounds;
-  have ⟨G, hG⟩ := T.existsGoedelSentence;
-  have h₁ : ⊢ₐ[T] ~ₐG ⇔ₐ ~ₐConL[T] := deducible_equiv_neg (equiv_LConsistencyOf_GoedelSentence hG)
-  have h₂ : ⊬ₐ[T] ~ₐG := GoedelSentenceUnrefutability hG hSounds;
+  have ⟨G, hG⟩ := T.existsGoedelSentence Γ;
+  have h₁ : ⊢ₐ[T ∔ Γ] ~ₐG ⇔ₐ ~ₐConL[T ∔ Γ] := deducible_equiv_neg (equiv_LConsistencyOf_GoedelSentence hG)
+  have h₂ : ⊬ₐ[T ∔ Γ] ~ₐG := GoedelSentenceUnrefutability hG hSounds;
   exact undeducible_equiv_left h₁ h₂;
 
 end ModalLogic.Arithmetic

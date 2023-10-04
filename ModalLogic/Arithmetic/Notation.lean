@@ -50,81 +50,74 @@ instance : HasEquivDef (Sentence α) := ⟨def_Equiv⟩
 
 end Sentence
 
-
 open Sentence
 
 structure Arithmetic (α) extends DeductionSystem (Sentence α) where 
-  Provable : (Sentence α) → (Sentence α)
+  Provable : (Context (Sentence α)) → (Sentence α) → (Sentence α)
 
-notation "Pr[" T "](" σ ")" => Arithmetic.Provable T σ
+notation "Pr[" T " ∔ " Γ "](" σ ")" => Arithmetic.Provable T Γ σ
+notation "Pr[" T "](" σ ")" => Pr[T ∔ ∅](σ)
 
 def Arithmetic.Proves_def (T : Arithmetic α) (σ : Sentence α) := T.Proves σ
 
 def Arithmetic.Deducible_def (T : Arithmetic α) (Γ σ) := T.Deducts Γ σ
 
-notation:20 "⊢ₐ[" T " + " Γ "] " σ => Arithmetic.Deducible_def T Γ σ
-notation:20 "⊬ₐ[" T " + " Γ "] " σ => ¬(⊢[T + Γ] σ)
+notation:20 "⊢ₐ[" T " ∔ " Γ "] " σ => Arithmetic.Deducible_def T Γ σ
+notation:20 "⊬ₐ[" T " ∔ " Γ "] " σ => ¬(Arithmetic.Deducible_def T Γ σ)
 
 notation:20 "⊢ₐ[" T "] " σ => Arithmetic.Deducible_def T ∅ σ
 notation:20 "⊬ₐ[" T "] " σ => ¬(⊢ₐ[T] σ)
 
 -- notation:20 "⊢ₐ[" T "] " σ => Arithmetic.Proves_def T σ 
 
-
 namespace Arithmetic
 
-variable (T : Arithmetic α)
-
-class IsSigma₁Sounds extends Arithmetic α where 
-  Sigma₁Sounds : ∀ σ, (⊢ₐ[T] Pr[T](σ)) → (⊢ₐ[T] σ)
+variable (T : Arithmetic α) (Γ : Context (Sentence α))
 
 class IsSigma1Sounds extends Arithmetic α where 
-  Sigma1Sounds : ∀ σ, (⊢ₐ[T] Pr[T](σ)) → (⊢ₐ[T] σ)
+  Sigma1Sounds : ∀ σ, (⊢ₐ[T ∔ Γ] Pr[T ∔ Γ](σ)) → (⊢ₐ[T ∔ Γ] σ)
 
 class HasFixedPoint extends Arithmetic α where 
-  hasFP (P : Sentence α → Sentence α) : ∃ σ, ⊢ₐ[T] (σ ⇔ₐ (P σ))
+  hasFP (P : Sentence α → Sentence α) : ∃ σ, ⊢ₐ[T ∔ Γ] (σ ⇔ₐ (P σ))
 
-def Incompleteness (T : Arithmetic α) := ∃ σ, (⊬ₐ[T] σ) ∧ (⊬ₐ[T] ~ₐσ)
+def Incompleteness := ∃ σ, (⊬ₐ[T ∔ Γ] σ) ∧ (⊬ₐ[T ∔ Γ] ~ₐσ)
 
 -- Löb style Consistent 
-@[simp] def LInconsistent := (⊢ₐ[T] ⊥ₐ)
-@[simp] def LConsistent := ¬(LInconsistent T)
+@[simp] def LInconsistent := (⊢ₐ[T ∔ Γ] ⊥ₐ)
+@[simp] def LConsistent := ¬(LInconsistent T Γ)
 
-@[simp] def LConsistencyOf : Sentence α := ~ₐPr[T](⊥ₐ)
-notation "ConL[" T "]" => Arithmetic.LConsistencyOf T
+@[simp] def LConsistencyOf : Sentence α := ~ₐPr[T ∔ Γ](⊥ₐ)
+notation "ConL[" T " ∔ " Γ "]" => Arithmetic.LConsistencyOf T Γ
+notation "ConL[" T "]" => ConL[T ∔ ∅]
 
 -- Hilbert-Bernays style Consistent 
-@[simp] def IsHBConsistent := ∀ σ, (⊢ₐ[T] σ) → (⊬ₐ[T] ~ₐσ)
-@[simp] def IsHBInconsistent := ¬(IsHBConsistent T)
+@[simp] def IsHBConsistent := ∀ σ, (⊢ₐ[T ∔ Γ] σ) → (⊬ₐ[T ∔ Γ] ~ₐσ)
+@[simp] def IsHBInconsistent := ¬(IsHBConsistent T Γ)
 
-axiom HBConsistent_of_Sigma1Soundness {T : Arithmetic α} : IsSigma1Sounds T → IsHBConsistent T
+axiom HBConsistent_of_Sigma1Soundness {T : Arithmetic α} {Γ} : IsSigma1Sounds T Γ → IsHBConsistent T Γ
 
 -- Gödel style Consistent 
-@[simp] def GConsistent := ∃ σ, (⊬ₐ[T] σ)
-class IsGConsistent extends Arithmetic α where 
-  GConsistent : GConsistent T
-
+@[simp] def GConsistent := ∃ σ, (⊬ₐ[T ∔ Γ] σ) 
+@[simp] def GInconsistent := ¬(GConsistent T Γ)
 
 class Derivability1 extends Arithmetic α where
-  D1 : ∀ {σ}, (⊢ₐ[T] σ) → (⊢ₐ[T] (Pr[T](σ)))
+  D1  : ∀ {σ}, (⊢ₐ[T ∔ Γ] σ) → (⊢ₐ[T ∔ Γ] (Pr[T ∔ Γ](σ)))
 
 class Derivability2 extends Arithmetic α where
-  D2 : ∀ {σ π}, ⊢ₐ[T] (Pr[T](σ ⇒ₐ π) ⇒ₐ (Pr[T](σ) ⇒ₐ Pr[T](π)))
+  D2 : ∀ {σ π}, ⊢ₐ[T ∔ Γ] (Pr[T ∔ Γ](σ ⇒ₐ π) ⇒ₐ (Pr[T ∔ Γ](σ) ⇒ₐ Pr[T ∔ Γ](π)))
 
 class Derivability3 extends Arithmetic α where
-  D3 : ∀ {σ}, ⊢ₐ[T] ((Pr[T](σ)) ⇒ₐ Pr[T](Pr[T](σ)))
+  D3 : ∀ {σ}, ⊢ₐ[T ∔ Γ] ((Pr[T ∔ Γ](σ)) ⇒ₐ Pr[T ∔ Γ](Pr[T ∔ Γ](σ)))
 
 class FormalizedSigma1Completeness extends Arithmetic α where
-  FS1C : ∀ {σ}, ⊢ₐ[T] (σ ⇒ₐ Pr[T](σ))
+  FS1C : ∀ {σ}, ⊢ₐ[T ∔ Γ] (σ ⇒ₐ Pr[T ∔ Γ](σ))
 
-
-
-@[simp] def GoedelSentence (G : Sentence α) := ⊢ₐ[T] (G ⇔ₐ ~ₐPr[T](G))
+@[simp] def GoedelSentence (G : Sentence α) := ⊢ₐ[T ∔ Γ] (G ⇔ₐ ~ₐPr[T ∔ Γ](G))
 
 class HasGoedelSentence extends Arithmetic α where 
-  hasGoedel : ∃ G, GoedelSentence T G
+  hasGoedel : ∃ G, GoedelSentence T Γ G
 
-def existsGoedelSentence {T : Arithmetic α} [HasGoedelSentence T] : ∃ G, GoedelSentence T G := HasGoedelSentence.hasGoedel
+def existsGoedelSentence {T : Arithmetic α} (Γ) [HasGoedelSentence T Γ] : ∃ G, GoedelSentence T Γ G := HasGoedelSentence.hasGoedel
 
 /-
 lemma HasGoedelSentence_of_HasFixedPoint {T : Arithmetic α} : HasFixedPoint T → HasGoedelSentence T := by 
@@ -132,21 +125,21 @@ lemma HasGoedelSentence_of_HasFixedPoint {T : Arithmetic α} : HasFixedPoint T �
   exact ⟨(HasFixedPoint.hasFP (λ σ => ~ₐPr[T](σ)))⟩
 -/
 
-@[simp] def HenkinSentence (H : Sentence α) := ⊢ₐ[T] (H ⇔ₐ Pr[T](H))
+@[simp] def HenkinSentence (H : Sentence α) := ⊢ₐ[T ∔ Γ] (H ⇔ₐ Pr[T ∔ Γ](H))
 
 class HasHenkinSentence where 
-  hasHenkin : ∃ H, HenkinSentence T H
+  hasHenkin : ∃ H, HenkinSentence T Γ H
 
-@[simp] def JeroslowSentence (J : Sentence α) := ⊢ₐ[T] (J ⇔ₐ Pr[T](~ₐJ))
+@[simp] def JeroslowSentence (J : Sentence α) := ⊢ₐ[T ∔ Γ] (J ⇔ₐ Pr[T ∔ Γ](~ₐJ))
 
-@[simp] def NotJeroslowSentence (NJ : Sentence α) := ⊢ₐ[T] (NJ ⇔ₐ ~ₐPr[T](~ₐNJ))
+@[simp] def NotJeroslowSentence (NJ : Sentence α) := ⊢ₐ[T ∔ Γ] (NJ ⇔ₐ ~ₐPr[T ∔ Γ](~ₐNJ))
 
-@[simp] def KreiselSentence (σ : Sentence α) (K : Sentence α) := ⊢ₐ[T] (K ⇔ₐ (Pr[T](K) ⇒ₐ σ))
+@[simp] def KreiselSentence (σ : Sentence α) (K : Sentence α) := ⊢ₐ[T ∔ Γ] (K ⇔ₐ (Pr[T ∔ Γ](K) ⇒ₐ σ))
 
 class HasKreiselSentence extends Arithmetic α where 
-  hasKriesel (σ : Sentence α) : ∃ K, KreiselSentence T σ K 
+  hasKriesel (σ : Sentence α) : ∃ K, KreiselSentence T Γ σ K 
   
-def existsKreiselSentence {T : Arithmetic α} [HasKreiselSentence T] : ∀ (σ : Sentence α), ∃ (K : Sentence α), KreiselSentence T σ K := HasKreiselSentence.hasKriesel
+def existsKreiselSentence {T : Arithmetic α} (Γ) [HasKreiselSentence T Γ] : ∀ (σ : Sentence α), ∃ (K : Sentence α), KreiselSentence T Γ σ K := HasKreiselSentence.hasKriesel
 
 /-
 lemma HasKreiselSentence_of_HasFixedPoint {T : Arithmetic α} : HasFixedPoint T → HasKreiselSentence T := by 

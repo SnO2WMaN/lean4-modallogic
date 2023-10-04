@@ -15,9 +15,7 @@ variable [HasGoedelSentence T Γ] [HasKreiselSentence T Γ] [Derivability1 T Γ]
 
 axiom FormalDeduction {σ π : Sentence α} : (⊢ₐ[T ∔ Γ] σ ⇒ₐ π) ↔ (Arithmetic.Deducible_def T (Γ ∪ {σ}) π)
 
-/--
-  Proof of Löb's Theorem with Gödel's 2nd incompleteness theorem.
--/
+/-- Proof of Löb's Theorem with Gödel's 2nd incompleteness theorem. -/
 theorem Loeb_with_GoedelIT2 {σ} : (⊢ₐ[T ∔ Γ] σ) ↔ (⊢ₐ[T ∔ Γ] Pr[T ∔ Γ](σ) ⇒ₐ σ) := by
   apply Iff.intro;
   . intro H; exact (MP deducible_K H);
