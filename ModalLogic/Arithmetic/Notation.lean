@@ -52,6 +52,8 @@ end Sentence
 
 open Sentence
 
+variable [DecidableEq α]
+
 structure Arithmetic (α) extends DeductionSystem (Sentence α) where 
   Provable : (Context (Sentence α)) → (Sentence α) → (Sentence α)
 
@@ -72,13 +74,23 @@ notation:20 "⊬ₐ[" T "] " σ => ¬(⊢ₐ[T] σ)
 
 namespace Arithmetic
 
-variable (T : Arithmetic α) (Γ : Context (Sentence α))
+variable (T : Arithmetic α) (Γ Δ : Context (Sentence α))
 
 class IsSigma1Sounds extends Arithmetic α where 
   Sigma1Sounds : ∀ σ, (⊢ₐ[T ∔ Γ] Pr[T ∔ Γ](σ)) → (⊢ₐ[T ∔ Γ] σ)
 
-class HasFixedPoint extends Arithmetic α where 
-  hasFP (P : Sentence α → Sentence α) : ∃ σ, ⊢ₐ[T ∔ Γ] (σ ⇔ₐ (P σ))
+class HasFixedPointTheorem extends Arithmetic α where
+  /-- Fixed point theorem (Diagonal lemma) -/
+  FP (P : Sentence α → Sentence α) : ∃ σ, ⊢ₐ[T ∔ Γ] (σ ⇔ₐ (P σ))
+
+class HasFormalDeductionTheorem extends Arithmetic α where
+  /-- Formalized deduction theorem -/
+  FDT {σ π : Sentence α} : (⊢ₐ[T ∔ Δ] Pr[T ∔ Γ](σ ⇒ₐ π) ⇔ₐ Pr[T ∔ Γ ∪ {σ}](π))
+
+lemma HasFormalDeductionTheorem.FDT_neg {T : Arithmetic α} {Γ Δ} [HasMP T.toDeductionSystem] [HasDT T.toDeductionSystem] [HasFormalDeductionTheorem T Γ Δ] {σ π} 
+  : (⊢ₐ[T ∔ Δ] ~ₐPr[T ∔ Γ](σ ⇒ₐ π) ⇔ₐ ~ₐPr[T ∔ Γ ∪ {σ}](π)) := by
+  suffices (⊢ₐ[T ∔ Δ] Pr[T ∔ Γ](σ ⇒ₐ π) ⇔ₐ Pr[T ∔ Γ ∪ {σ}](π)) from by exact T.deducible_equiv_neg this;
+  exact HasFormalDeductionTheorem.FDT
 
 def Incompleteness := ∃ σ, (⊬ₐ[T ∔ Γ] σ) ∧ (⊬ₐ[T ∔ Γ] ~ₐσ)
 
@@ -112,6 +124,14 @@ class Derivability3 extends Arithmetic α where
 class FormalizedSigma1Completeness extends Arithmetic α where
   FS1C : ∀ {σ}, ⊢ₐ[T ∔ Γ] (σ ⇒ₐ Pr[T ∔ Γ](σ))
 
+lemma pr_negneg_intro {T : Arithmetic α} [HasMP T.toDeductionSystem] {Γ} [Derivability2 T Γ] {σ} : (⊢ₐ[T ∔ Γ] Pr[T ∔ Γ](σ)) → (⊢ₐ[T ∔ Γ] Pr[T ∔ Γ](~ₐ~ₐσ)) := by
+  intro H;
+  sorry
+
+lemma not_pr_negneg_intro {T : Arithmetic α} [HasMP T.toDeductionSystem] {Γ} [Derivability2 T Γ] {σ} : (⊢ₐ[T ∔ Γ] ~ₐPr[T ∔ Γ](σ)) → (⊢ₐ[T ∔ Γ] ~ₐPr[T ∔ Γ](~ₐ~ₐσ)) := by
+  intro H;
+  sorry
+
 @[simp] def GoedelSentence (G : Sentence α) := ⊢ₐ[T ∔ Γ] (G ⇔ₐ ~ₐPr[T ∔ Γ](G))
 
 class HasGoedelSentence extends Arithmetic α where 
@@ -120,9 +140,9 @@ class HasGoedelSentence extends Arithmetic α where
 def existsGoedelSentence {T : Arithmetic α} (Γ) [HasGoedelSentence T Γ] : ∃ G, GoedelSentence T Γ G := HasGoedelSentence.hasGoedel
 
 /-
-lemma HasGoedelSentence_of_HasFixedPoint {T : Arithmetic α} : HasFixedPoint T → HasGoedelSentence T := by 
+lemma HasGoedelSentence_of_HasFixedPointTheorem {T : Arithmetic α} : HasFixedPointTheorem T → HasGoedelSentence T := by 
   intro h;
-  exact ⟨(HasFixedPoint.hasFP (λ σ => ~ₐPr[T](σ)))⟩
+  exact ⟨(HasFixedPointTheorem.FP (λ σ => ~ₐPr[T](σ)))⟩
 -/
 
 @[simp] def HenkinSentence (H : Sentence α) := ⊢ₐ[T ∔ Γ] (H ⇔ₐ Pr[T ∔ Γ](H))
@@ -142,9 +162,9 @@ class HasKreiselSentence extends Arithmetic α where
 def existsKreiselSentence {T : Arithmetic α} (Γ) [HasKreiselSentence T Γ] : ∀ (σ : Sentence α), ∃ (K : Sentence α), KreiselSentence T Γ σ K := HasKreiselSentence.hasKriesel
 
 /-
-lemma HasKreiselSentence_of_HasFixedPoint {T : Arithmetic α} : HasFixedPoint T → HasKreiselSentence T := by 
+lemma HasKreiselSentence_of_HasFixedPointTheorem {T : Arithmetic α} : HasFixedPointTheorem T → HasKreiselSentence T := by 
   intro h;
-  exact ⟨λ σ => HasFixedPoint.hasFP (λ π => (Pr[T](π) ⇒ₐ σ))⟩
+  exact ⟨λ σ => HasFixedPointTheorem.FP (λ π => (Pr[T](π) ⇒ₐ σ))⟩
 -/
 
 end Arithmetic

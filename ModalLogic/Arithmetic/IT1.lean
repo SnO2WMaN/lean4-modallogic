@@ -8,7 +8,7 @@ namespace ModalLogic.Arithmetic
 
 variable [DecidableEq α] {T : Arithmetic α} {Γ : Context (Sentence α)}
 variable [HasDT T.toDeductionSystem] [HasMP T.toDeductionSystem] [HasExplode T.toDeductionSystem] [HasDNElim T.toDeductionSystem]
-variable [HasFixedPoint T Γ] [HasGoedelSentence T Γ] [Derivability1 T Γ]
+variable [HasFixedPointTheorem T Γ] [HasGoedelSentence T Γ] [Derivability1 T Γ]
 
 /-- Unprovablility side of Gödel's 1st incompleteness theorem. -/
 theorem GoedelSentenceUnprovability (hG : GoedelSentence T Γ G) : (IsHBConsistent T Γ) → (⊬ₐ[T ∔ Γ] G) := by

@@ -12,7 +12,7 @@ namespace ModalLogic.Arithmetic
 variable [DecidableEq α]
 variable {T : Arithmetic α} {Γ : Context (Sentence α)}
 variable [HasDT T.toDeductionSystem] [HasMP T.toDeductionSystem] [HasExplode T.toDeductionSystem] [HasDNElim T.toDeductionSystem]
-variable [HasFixedPoint T Γ] [HasGoedelSentence T Γ]
+variable [HasFixedPointTheorem T Γ] [HasGoedelSentence T Γ]
 variable [Derivability1 T Γ] [Derivability2 T Γ] [FormalizedSigma1Completeness T Γ]
 
 lemma GoedelIT2.lem1 : ∀ (σ : Sentence α), ⊢ₐ[T ∔ Γ] (~ₐPr[T ∔ Γ](σ) ⇒ₐ ConL[T ∔ Γ]) := by
@@ -60,6 +60,9 @@ theorem LConsistencyOfUnprovablility_of_HBConsistent : (IsHBConsistent T Γ) →
   have h₁ : ⊢ₐ[T ∔ Γ] G ⇔ₐ ConL[T ∔ Γ] := equiv_LConsistencyOf_GoedelSentence hG;
   have h₂ : ⊬ₐ[T ∔ Γ] G := GoedelSentenceUnprovability hG hConsistent;
   exact undeducible_equiv_left h₁ h₂;
+
+lemma HBInconsistent_of_LConsistencyOfProvability : (⊢ₐ[T ∔ Γ] ConL[T ∔ Γ]) → (IsHBInconsistent T Γ) := by
+  exact λ h₁ h₂ => (LConsistencyOfUnprovablility_of_HBConsistent h₂) h₁
 
 /-- Unrefutability side of Gödel's 2nd incompleteness theorem. -/
 theorem LConsistencyOfUnrefutability_of_Soundness : (IsSigma1Sounds T Γ) → (⊬ₐ[T ∔ Γ] ~ₐConL[T ∔ Γ]) := by
