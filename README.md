@@ -25,6 +25,8 @@
     - 第2不完全性定理を用いたLöbの定理の証明．
 - `ModalLogic.Arithmetic.Loeb_without_IT2`
     - 第2不完全性定理を用いないLöbの定理の証明．
+- `ModalLogic.Arithmetic.LConsistencyofUnprovability_of_LConsistent`
+    - Löb無矛盾ならLöb無矛盾文は証明不能である．
 - `ModalLogic.Arithmetic.HenkinSentenceProvablility`
     - Henkin文は証明可能である．
 
