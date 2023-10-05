@@ -267,7 +267,7 @@ lemma deducible_conj_contract : (Γ ⊢ᵈ[D] φ ⋏ φ) ↔ (Γ ⊢ᵈ[D] φ) :
 lemma deducible_NonContradiction {φ} : (Γ ⊢ᵈ[D] (Axioms.NonContradiction φ)) := by
   simp only [Axioms.NonContradiction, HasNegDef.NegDef];
   repeat apply DT.mpr;
-  have h₁ : (Γ ∪ {φ ⋏ φ ⇒ ⊥}) ⊢ᵈ[D] φ ⋏ φ ⇒ ⊥ := by simp;
+  have h₁ : (Γ ∪ {φ ⋏ (φ ⇒ ⊥)}) ⊢ᵈ[D] φ ⋏ (φ ⇒ ⊥) := by simp;
   have h₁l := deducible_conj_left h₁;
   have h₁r := deducible_conj_right h₁;
   exact MP h₁r h₁l;

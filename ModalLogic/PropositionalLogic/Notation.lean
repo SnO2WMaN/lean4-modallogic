@@ -12,7 +12,7 @@ class HasBot where bot : α
 scoped[ModalLogic.PropositionalLogic] notation:70 "⊥" => HasBot.bot
 
 class HasImply where imply : α → α → α
-scoped[ModalLogic.PropositionalLogic] infixr:63 " ⇒ " => HasImply.imply
+scoped[ModalLogic.PropositionalLogic] infixr:62 " ⇒ " => HasImply.imply
 
 class HasNeg where neg : α → α
 scoped[ModalLogic.PropositionalLogic] prefix:64 "~" => HasNeg.neg
@@ -25,13 +25,13 @@ class HasTop where top : α
 scoped[ModalLogic.PropositionalLogic] notation:70 "⊤" => HasTop.top
 
 class HasDisj where disj : α → α → α
-scoped[ModalLogic.PropositionalLogic] infixl:62 " ⋎ " => HasDisj.disj
+scoped[ModalLogic.PropositionalLogic] infixl:63 " ⋎ " => HasDisj.disj
 
 class HasDisjDef [HasDisj α] [HasImply α] [HasNeg α] where 
   DisjDef (φ ψ : α) : (φ ⋎ ψ) = (~φ ⇒ ψ)
 
 class HasConj where conj : α → α → α
-scoped[ModalLogic.PropositionalLogic] infixl:62 " ⋏ " => HasConj.conj
+scoped[ModalLogic.PropositionalLogic] infixl:63 " ⋏ " => HasConj.conj
 
 class HasConjDef [HasConj α] [HasImply α] [HasNeg α] where 
   ConjDef (φ ψ : α) : (φ ⋏ ψ) = ~(φ ⇒ ~ψ)
