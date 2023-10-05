@@ -10,7 +10,7 @@ inductive Sentence (α : Type u)
 deriving DecidableEq, Repr
 
 notation "⊥ₐ" => Sentence.Contradiction
-infixl:63 " ⇒ₐ " => Sentence.Imply
+infixl:62 " ⇒ₐ " => Sentence.Imply
 
 namespace Sentence
 
@@ -20,21 +20,21 @@ instance : HasImply (Sentence α) := ⟨Imply⟩
 variable (φ ψ : Sentence α)
 
 @[simp] def Neg := φ ⇒ₐ ⊥ₐ
-prefix:70 "~ₐ" => Neg
+prefix:64 "~ₐ" => Neg
 instance : HasNeg (Sentence α) := ⟨Neg⟩
 
 @[simp] def def_Neg : φ ⇒ₐ ⊥ₐ = ~ₐφ := rfl
 instance : HasNegDef (Sentence α) := ⟨def_Neg⟩
 
 @[simp] def Disj := (~ₐφ) ⇒ₐ ψ
-infixl:64 " ⋎ₐ " => Disj
+infixl:63 " ⋎ₐ " => Disj
 instance : HasDisj (Sentence α) := ⟨Disj⟩
 
 @[simp] def def_Disj : (~ₐφ) ⇒ₐ ψ = φ ⋎ₐ ψ := rfl
 instance : HasDisjDef (Sentence α) := ⟨def_Disj⟩
 
 @[simp] def Conj := ~ₐ(φ ⇒ ~ψ)
-infixl:65 " ⋏ₐ " => Conj
+infixl:63 " ⋏ₐ " => Conj
 instance : HasConj (Sentence α) := ⟨Conj⟩
 
 @[simp] def def_Conj : ~ₐ(φ ⇒ ~ψ) = φ ⋏ₐ ψ := rfl
@@ -124,13 +124,36 @@ class Derivability3 extends Arithmetic α where
 class FormalizedSigma1Completeness extends Arithmetic α where
   FS1C : ∀ {σ}, ⊢ₐ[T ∔ Γ] (σ ⇒ₐ Pr[T ∔ Γ](σ))
 
-lemma pr_negneg_intro {T : Arithmetic α} [HasMP T.toDeductionSystem] {Γ} [Derivability2 T Γ] {σ} : (⊢ₐ[T ∔ Γ] Pr[T ∔ Γ](σ)) → (⊢ₐ[T ∔ Γ] Pr[T ∔ Γ](~ₐ~ₐσ)) := by
+section
+
+variable {T : Arithmetic α} [HasMP T.toDeductionSystem] [HasDT T.toDeductionSystem] 
+variable [Derivability1 T Γ] [Derivability2 T Γ] [Derivability3 T Γ]
+variable {Γ Δ} {σ π : Sentence α}
+
+open HasMP HasDT
+open Derivability1 Derivability2
+
+lemma Provable.conj_distribute : (⊢ₐ[T ∔ Δ] Pr[T ∔ Γ](σ ⋏ₐ π)) → (⊢ₐ[T ∔ Δ] (Pr[T ∔ Γ](σ) ⋏ₐ Pr[T ∔ Γ](π))) := by
+  intro H;
+  simp only [Conj] at H;
+  sorry
+
+lemma Provable.pr_negneg_intro : (⊢ₐ[T ∔ Δ] Pr[T ∔ Γ](σ)) → (⊢ₐ[T ∔ Δ] Pr[T ∔ Γ](~ₐ~ₐσ)) := by
   intro H;
   sorry
 
-lemma not_pr_negneg_intro {T : Arithmetic α} [HasMP T.toDeductionSystem] {Γ} [Derivability2 T Γ] {σ} : (⊢ₐ[T ∔ Γ] ~ₐPr[T ∔ Γ](σ)) → (⊢ₐ[T ∔ Γ] ~ₐPr[T ∔ Γ](~ₐ~ₐσ)) := by
+lemma Provable.not_pr_negneg_intro : (⊢ₐ[T ∔ Δ] ~ₐPr[T ∔ Γ](σ)) → (⊢ₐ[T ∔ Δ] ~ₐPr[T ∔ Γ](~ₐ~ₐσ)) := by
   intro H;
   sorry
+
+lemma Provable.noContradiction : (⊢ₐ[T ∔ Δ] (Pr[T ∔ Γ](σ) ⋏ₐ Pr[T ∔ Γ](~ₐσ)) ⇒ₐ Pr[T ∔ Γ](⊥ₐ)) := by
+  have h₁ : ⊢ₐ[T ∔ Γ] (σ ⋏ₐ ~ₐσ) ⇒ₐ ⊥ₐ := deducible_NonContradiction;
+  have h₂ : ⊢ₐ[T ∔ Γ] Pr[T ∔ Γ](σ ⋏ₐ ~ₐσ) ⇒ₐ Pr[T ∔ Γ](⊥ₐ) := MP D2 (D1 h₁);
+  have h₃ : (⊢ₐ[T ∔ Γ] Pr[T ∔ Γ](σ ⋏ₐ ~ₐσ))→  (⊢ₐ[T ∔ Γ] Pr[T ∔ Γ](⊥ₐ)) := MP h₂;
+  
+  sorry
+
+end
 
 @[simp] def GoedelSentence (G : Sentence α) := ⊢ₐ[T ∔ Γ] (G ⇔ₐ ~ₐPr[T ∔ Γ](G))
 

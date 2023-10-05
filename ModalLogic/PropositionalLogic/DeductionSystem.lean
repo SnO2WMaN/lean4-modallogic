@@ -264,6 +264,28 @@ lemma deducible_conj_contract : (Γ ⊢ᵈ[D] φ ⋏ φ) ↔ (Γ ⊢ᵈ[D] φ) :
     exact deducible_conj_intro ⟨H, H⟩;
 
 @[simp]
+lemma deducible_ant_conj_elim_left : ((Γ ⊢ᵈ[D] (φ ⋏ ψ) ⇒ ρ) ∧ (Γ ⊢ᵈ[D] φ ⇒ ψ)) → (Γ ⊢ᵈ[D] φ ⇒ ρ) := by
+  intro H;
+  repeat apply DT.mpr;
+  have Hl : (Γ ∪ {φ}) ⊢ᵈ[D] φ ⋏ ψ ⇒ ρ := H.left;
+  have Hr : (Γ ∪ {φ}) ⊢ᵈ[D] φ ⇒ ψ:= H.right;
+  have h₁ : (Γ ∪ {φ}) ⊢ᵈ[D] φ := by simp;
+  have h₂ : (Γ ∪ {φ}) ⊢ᵈ[D] ψ := MP Hr h₁;
+  have h₃ := deducible_conj_intro ⟨h₁, h₂⟩;
+  exact MP Hl h₃;
+
+@[simp]
+lemma deducible_ant_conj_elim_right : ((Γ ⊢ᵈ[D] φ ⋏ ψ ⇒ ρ) ∧ (Γ ⊢ᵈ[D] ψ ⇒ φ)) → (Γ ⊢ᵈ[D] ψ ⇒ ρ) := by
+  intro H;
+  repeat apply DT.mpr;
+  have Hl : (Γ ∪ {ψ}) ⊢ᵈ[D] φ ⋏ ψ ⇒ ρ := H.left;
+  have Hr : (Γ ∪ {ψ}) ⊢ᵈ[D] ψ ⇒ φ := H.right;
+  have h₁ : (Γ ∪ {ψ}) ⊢ᵈ[D] ψ := by simp;
+  have h₂ : (Γ ∪ {ψ}) ⊢ᵈ[D] φ := MP Hr h₁;
+  have h₃ := deducible_conj_intro ⟨h₂, h₁⟩;
+  exact MP Hl h₃;
+
+@[simp]
 lemma deducible_NonContradiction {φ} : (Γ ⊢ᵈ[D] (Axioms.NonContradiction φ)) := by
   simp only [Axioms.NonContradiction, HasNegDef.NegDef];
   repeat apply DT.mpr;
