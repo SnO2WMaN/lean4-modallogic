@@ -15,20 +15,22 @@ variable [HasKreiselSentence T Γ] [Derivability1 T Γ] [Derivability2 T Γ] [De
 /-- Proof of Löb's Theorem without Gödel's 2nd incompleteness theorem -/
 theorem Loeb_without_GoedelIT2 {σ} : (⊢ₐ[T ∔ Γ] σ) ↔ (⊢ₐ[T ∔ Γ] Pr[T ∔ Γ](σ) ⇒ₐ σ) := by
   apply Iff.intro;
-  . sorry; -- exact λ H => impₐ_intro_con (Pr[T](σ)) H;
+  . intro H;
+    exact MP deducible_K H;
   . intro H;
     have ⟨K, hK⟩ := @existsKreiselSentence _ T Γ _ σ;
     simp only [KreiselSentence] at hK;
-    have h₁ : ⊢ₐ[T ∔ Γ] K ⇒ₐ (Pr[T ∔ Γ](K) ⇒ₐ σ) := deducible_equiv_mp hK;
-    have h₂ : ⊢ₐ[T ∔ Γ] K ⇒ₐ Pr[T ∔ Γ](K) := sorry -- (mpₐ _).mpr D1;
-    have h₃ : ⊢ₐ[T ∔ Γ] (K ⇒ₐ Pr[T ∔ Γ](K)) ⇒ₐ (K ⇒ₐ σ) := sorry; -- T.deducible_MP h₁ h₂;
-    
-    have h₄ : ⊢ₐ[T ∔ Γ] K ⇒ₐ σ := MP h₃ h₂;
-    have h₅ : ⊢ₐ[T ∔ Γ] Pr[T ∔ Γ](K) ⇒ₐ Pr[T ∔ Γ](σ) := MP D2 (D1 h₄);
-    have h₆ : ⊢ₐ[T ∔ Γ] Pr[T ∔ Γ](K) ⇒ₐ σ := T.deducible_imply_trans ⟨h₅, H⟩;
-    have h₇ : ⊢ₐ[T ∔ Γ] K := (deducible_equiv_eq.mp hK).mpr h₆;
-    have h₈ : ⊢ₐ[T ∔ Γ] Pr[T ∔ Γ](K) := D1 h₇;
-    have h₉ : ⊢ₐ[T ∔ Γ] σ := MP h₆ h₈;
+    have h₁  : ⊢ₐ[T ∔ Γ] K ⇒ₐ (Pr[T ∔ Γ](K) ⇒ₐ σ) := deducible_equiv_mp hK;
+    have h₂  : ⊢ₐ[T ∔ Γ] Pr[T ∔ Γ](K ⇒ₐ (Pr[T ∔ Γ](K) ⇒ₐ σ)) := D1 h₁;
+    have h₃  : ⊢ₐ[T ∔ Γ] (Pr[T ∔ Γ](K) ⇒ₐ Pr[T ∔ Γ](Pr[T ∔ Γ](K) ⇒ₐ σ)) := MP D2 h₂;
+    have h₄  : ⊢ₐ[T ∔ Γ] (Pr[T ∔ Γ](Pr[T ∔ Γ](K) ⇒ₐ σ) ⇒ₐ (Pr[T ∔ Γ](Pr[T ∔ Γ](K)) ⇒ₐ Pr[T ∔ Γ](σ))) := D2;
+    have h₅  : ⊢ₐ[T ∔ Γ] (Pr[T ∔ Γ](K) ⇒ Pr[T ∔ Γ](Pr[T ∔ Γ](K)) ⇒ₐ Pr[T ∔ Γ](σ)) := deducible_imply_trans ⟨h₃, h₄⟩;
+    have h₆  : ⊢ₐ[T ∔ Γ] (Pr[T ∔ Γ](K) ⇒ₐ Pr[T ∔ Γ](Pr[T ∔ Γ](K))) := D3;
+    have h₇  : ⊢ₐ[T ∔ Γ] (Pr[T ∔ Γ](K) ⇒ Pr[T ∔ Γ](σ)) := MP (MP deducible_S h₅) h₆;
+    have h₈  : ⊢ₐ[T ∔ Γ] Pr[T ∔ Γ](K) ⇒ₐ σ := T.deducible_imply_trans ⟨h₇, H⟩;
+    have h₉  : ⊢ₐ[T ∔ Γ] K := (deducible_equiv_eq.mp hK).mpr h₈;
+    have h₁₀ : ⊢ₐ[T ∔ Γ] Pr[T ∔ Γ](K) := D1 h₉;
+    have h₁₁ : ⊢ₐ[T ∔ Γ] σ := MP h₈ h₁₀;
     assumption;
 
 lemma LInconsistent_of_ProvabilityLconsistencyOf : (⊢ₐ[T ∔ Γ] ConL[T ∔ Γ]) → (LInconsistent T Γ) := by
