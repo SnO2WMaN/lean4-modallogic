@@ -1,10 +1,6 @@
-import Aesop
-import Mathlib.Data.Finset.Basic
+import ModalLogic.SupplymentSimp
 import ModalLogic.PropositionalLogic.Notation
 import ModalLogic.PropositionalLogic.Axioms
-
-open Finset
-attribute [simp] union_comm insert_eq
 
 open ModalLogic.PropositionalLogic
 
@@ -43,7 +39,7 @@ attribute [simp] HasIntroImply.IntroImply
 attribute [aesop unsafe 50% apply] HasIntroImply.IntroImply
 
 class HasElimImply extends (DeductionSystem α) where
-  ElimImply {φ ψ : α} : ((Γ ⊢ᵈ[D] φ ⇒ ψ) ∧ (Γ ⊢ᵈ[D] φ)) → (Γ ⊢ᵈ[D] ψ)
+  ElimImply {φ ψ : α} : ((Γ₁ ⊢ᵈ[D] φ ⇒ ψ) ∧ (Γ₂ ⊢ᵈ[D] φ)) → ((Γ₁ ∪ Γ₂) ⊢ᵈ[D] ψ)
 attribute [simp] HasElimImply.ElimImply
 
 class HasIntroDisj extends (DeductionSystem α) where
@@ -52,11 +48,11 @@ class HasIntroDisj extends (DeductionSystem α) where
 attribute [simp] HasIntroDisj.IntroDisjL HasIntroDisj.IntroDisjR
 
 class HasElimDisj extends (DeductionSystem α) where
-  ElimDisj {φ ψ ξ : α} : ((Γ ⊢ᵈ[D] φ ⋎ ψ) ∧ (Γ ⊢ᵈ[D] φ ⇒ ξ) ∧ (Γ ⊢ᵈ[D] ψ ⇒ ξ)) → (Γ ⊢ᵈ[D] ξ)
+  ElimDisj {φ ψ ξ : α} : ((Γ₁ ⊢ᵈ[D] φ ⋎ ψ) ∧ (Γ₂ ⊢ᵈ[D] φ ⇒ ξ) ∧ (Γ₃ ⊢ᵈ[D] ψ ⇒ ξ)) → ((Γ₁ ∪ Γ₂ ∪ Γ₃) ⊢ᵈ[D] ξ)
 attribute [simp] HasElimDisj.ElimDisj
 
 class HasIntroConj extends (DeductionSystem α) where
-  IntroConj {φ ψ : α} : ((Γ ⊢ᵈ[D] φ) ∧ (Γ ⊢ᵈ[D] ψ)) → (Γ ⊢ᵈ[D] (φ ⋏ ψ))
+  IntroConj {φ ψ : α} : ((Γ₁ ⊢ᵈ[D] φ) ∧ (Γ₂ ⊢ᵈ[D] ψ)) → ((Γ₁ ∪ Γ₂) ⊢ᵈ[D] (φ ⋏ ψ))
 attribute [simp] HasElimDisj.ElimDisj
 
 class HasElimConj extends (DeductionSystem α) where
@@ -84,21 +80,41 @@ variable {D : DeductionSystem α}
 instance : Coe (∅ ⊢ᵈ[D] φ) (⊢[D.toProveSystem] φ) := ⟨D.NoContextEquality.mp⟩
 instance : Coe (⊢ᵈ[D] φ) (∅ ⊢ᵈ[D] φ) := ⟨λ h => D.NoContextEquality.mpr h⟩
 
+@[simp] lemma Trivial (φ : α) : {φ} ⊢ᵈ[D] φ := by aesop;
+
+@[simp] lemma Id [HasIntroImply D] : Γ ⊢ᵈ[D] φ ⇒ φ := by simp;
+
 @[simp]
-lemma trivial_context (φ : α) : {φ} ⊢ᵈ[D] φ := by aesop;
+lemma IntroNeg [HasIntroImply D] : ((Γ ∪ {φ}) ⊢ᵈ[D] ⊥) → (Γ ⊢ᵈ[D] ~φ) := by aesop;
 
-@[simp] 
-lemma equality [HasIntroImply D] : Γ ⊢ᵈ[D] φ ⇒ φ := by simp;
-
-lemma intro_bot [HasElimImply D] : ((Γ ⊢ᵈ[D] ~φ) ∧ (Γ ⊢ᵈ[D] φ)) → (Γ ⊢ᵈ[D] ⊥) := by
+@[simp]
+lemma ElimNeg [HasElimImply D] : ((Γ₁ ⊢ᵈ[D] ~φ) ∧ (Γ₂ ⊢ᵈ[D] φ)) → ((Γ₁ ∪ Γ₂) ⊢ᵈ[D] ⊥) := by
   intro H₁;
   simp_all;
   exact HasElimImply.ElimImply H₁;
+
+@[simp]
+lemma ElimNeg' [HasElimImply D] : ((Γ ⊢ᵈ[D] ~φ) ∧ (Γ ⊢ᵈ[D] φ)) → (Γ ⊢ᵈ[D] ⊥) := by 
+  intro H;
+  have := ElimNeg H;
+  aesop;
 
 variable [HasWeakenContext D] {Δ : Context α} 
 
 instance : Coe (Γ ⊢ᵈ[D] φ) ((Γ ∪ Δ) ⊢ᵈ[D] φ) := ⟨HasWeakenContext.WeakenContext⟩ 
 instance : Coe (⊢ᵈ[D] φ) (Γ ⊢ᵈ[D] φ) := ⟨by intro h; have : (∅ ∪ Γ) ⊢ᵈ[D] φ := h; aesop;⟩
+
+variable [HasElimImply D] in
+@[simp] lemma HasElimImply.ElimImply' {φ ψ : α} : ((Γ ⊢ᵈ[D] φ ⇒ ψ) ∧ (Γ ⊢ᵈ[D] φ)) → (Γ ⊢ᵈ[D] ψ) := by
+  intro H;
+  have := HasElimImply.ElimImply H;
+  aesop;
+
+variable [HasConj α] [HasIntroConj D] in
+@[simp] lemma HasIntroConj.IntroConj' {φ ψ : α} : ((Γ ⊢ᵈ[D] φ) ∧ (Γ ⊢ᵈ[D] ψ)) → (Γ ⊢ᵈ[D] (φ ⋏ ψ)) := by
+  intro H;
+  have := HasIntroConj.IntroConj H;
+  aesop;
 
 end Lemmas
 

@@ -1,3 +1,4 @@
+import ModalLogic.SupplymentSimp
 import ModalLogic.PropositionalLogic.DeductionSystem.Notations
 import ModalLogic.PropositionalLogic.DeductionSystem.Minimal0
 import ModalLogic.PropositionalLogic.DeductionSystem.Minimal

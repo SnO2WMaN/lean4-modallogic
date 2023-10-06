@@ -17,6 +17,18 @@ variable [HasBot α] [HasImply α] [HasNeg α]
 @[simp] def DNI : α := φ ⇒ ~~φ
 @[simp] def DNE : α := ~~φ ⇒ φ
 
+/-- Consequentia mirabilis -/
+@[simp] def CM : α := (φ ⇒ ~φ) ⇒ ~φ
+
+/-- Strong Consequentia mirabilis -/
+@[simp] def CMn : α := (~φ ⇒ φ) ⇒ φ
+
+/-- Reductio Ad Absurdum -/
+@[simp] def RAA : α := (φ ⇒ ⊥) ⇒ ~φ
+
+/-- Strong Reductio Ad Absurdum -/
+@[simp] def RAAn : α := (~φ ⇒ ⊥) ⇒ φ 
+
 variable [HasConj α]
 
 @[simp] def ConjIntro := (φ ⇒ ψ ⇒ (φ ⋏ ψ))

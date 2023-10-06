@@ -1,51 +1,58 @@
+import ModalLogic.SupplymentSimp
 import ModalLogic.PropositionalLogic.DeductionSystem.Notations
 import ModalLogic.PropositionalLogic.DeductionSystem.Minimal0
 
 open ModalLogic.PropositionalLogic.Axioms
 open ModalLogic.PropositionalLogic.DeductionSystem
-open IsMinimal HasElimImply
+open IsMinimal HasElimImply HasIntroConj
 
 namespace ModalLogic.PropositionalLogic.DeductionSystem
 
 variable [DecidableEq α] [HasImply α] [HasDisj α] [HasConj α]
 variable {D : DeductionSystem α} [IsMinimal D]
 
-theorem conj_decomp : (Γ ⊢ᵈ[D] (φ ⋏ ψ)) → ((Γ ⊢ᵈ[D] φ) ∧ (Γ ⊢ᵈ[D] ψ)):= by
+theorem ConjDecomp : (Γ ⊢ᵈ[D] (φ ⋏ ψ)) → ((Γ ⊢ᵈ[D] φ) ∧ (Γ ⊢ᵈ[D] ψ)):= by
   intro H;
   constructor;
   exact ElimConjL H;
   exact ElimConjR H;
+alias conj_decomp := ConjDecomp
 
 @[simp]
-theorem conj_comm : (Γ ⊢ᵈ[D] (φ ⋏ ψ)) → (Γ ⊢ᵈ[D] (ψ ⋏ φ)) := by
+theorem ConjComm : (Γ ⊢ᵈ[D] (φ ⋏ ψ)) → (Γ ⊢ᵈ[D] (ψ ⋏ φ)) := by
   intro H;
   have h₁ := conj_decomp H;
-  exact IntroConj ⟨h₁.right, h₁.left⟩;
+  exact IntroConj' ⟨h₁.right, h₁.left⟩;
+alias conj_comm := ConjComm
 
-theorem conj_weakening : (Γ ⊢ᵈ[D] φ) → (Γ ⊢ᵈ[D] φ ⋏ φ) := λ H => IntroConj ⟨H, H⟩
+theorem ConjWeaken : (Γ ⊢ᵈ[D] φ) → (Γ ⊢ᵈ[D] φ ⋏ φ) := λ H => IntroConj' ⟨H, H⟩
+alias conj_weakening := ConjWeaken
 
 @[simp]
-theorem conj_contract: (Γ ⊢ᵈ[D] φ ⋏ φ) → (Γ ⊢ᵈ[D] φ) := ElimConjL
+theorem ConjContract: (Γ ⊢ᵈ[D] φ ⋏ φ) → (Γ ⊢ᵈ[D] φ) := ElimConjL
+alias conj_contract := ConjContract
 
-lemma conj_dilemma_elim_left : ((Γ ⊢ᵈ[D] (φ ⋏ ψ) ⇒ ρ) ∧ (Γ ⊢ᵈ[D] φ ⇒ ψ)) → (Γ ⊢ᵈ[D] φ ⇒ ρ) := by
+lemma ElimConjL_Dilemma : ((Γ ⊢ᵈ[D] (φ ⋏ ψ) ⇒ ρ) ∧ (Γ ⊢ᵈ[D] φ ⇒ ψ)) → (Γ ⊢ᵈ[D] φ ⇒ ρ) := by
   intro H;
   have Hl : (Γ ∪ {φ}) ⊢ᵈ[D] φ ⋏ ψ ⇒ ρ := H.left;
   have Hr : (Γ ∪ {φ}) ⊢ᵈ[D] φ ⇒ ψ:= H.right;
   have h₁ : (Γ ∪ {φ}) ⊢ᵈ[D] φ := by simp;
-  have h₂ : (Γ ∪ {φ}) ⊢ᵈ[D] ψ := ElimImply ⟨Hr, h₁⟩;
-  have h₃ := IntroConj ⟨h₁, h₂⟩;
+  have h₂ : (Γ ∪ {φ}) ⊢ᵈ[D] ψ := ElimImply' ⟨Hr, h₁⟩;
+  have h₃ := IntroConj' ⟨h₁, h₂⟩;
   have h₄ := ElimImply ⟨Hl, h₃⟩;
-  aesop;
+  aesop
+alias conj_dilemma_elim_left := ElimConjL_Dilemma
 
-lemma conj_dilemma_elim_right : ((Γ ⊢ᵈ[D] (φ ⋏ ψ) ⇒ ρ) ∧ (Γ ⊢ᵈ[D] ψ ⇒ φ)) → (Γ ⊢ᵈ[D] ψ ⇒ ρ) := by
+lemma ElimConjR_Dilemma : ((Γ ⊢ᵈ[D] (φ ⋏ ψ) ⇒ ρ) ∧ (Γ ⊢ᵈ[D] ψ ⇒ φ)) → (Γ ⊢ᵈ[D] ψ ⇒ ρ) := by
   intro H;
   have Hl : (Γ ∪ {ψ}) ⊢ᵈ[D] φ ⋏ ψ ⇒ ρ := H.left;
   have Hr : (Γ ∪ {ψ}) ⊢ᵈ[D] ψ ⇒ φ := H.right;
   have h₁ : (Γ ∪ {ψ}) ⊢ᵈ[D] ψ := by simp;
-  have h₂ : (Γ ∪ {ψ}) ⊢ᵈ[D] φ := ElimImply ⟨Hr, h₁⟩;
-  have h₃ := IntroConj ⟨h₂, h₁⟩;
+  have h₂ : (Γ ∪ {ψ}) ⊢ᵈ[D] φ := ElimImply' ⟨Hr, h₁⟩;
+  have h₃ := IntroConj' ⟨h₂, h₁⟩;
   have h₄ := ElimImply ⟨Hl, h₃⟩;
   aesop;
+alias conj_dilemma_elim_right := ElimConjR_Dilemma
 
 variable [HasBot α] [HasNeg α] [HasNegDef α]
 
@@ -63,45 +70,59 @@ lemma NonContradiction {φ} : (Γ ⊢ᵈ[D] (Axioms.NonContradiction φ)) := by
 variable [HasEquiv α] [HasEquivDef α]
 
 open HasEquivDef
-attribute [simp] EquivDef IntroConj
+attribute [simp] EquivDef
 
 @[simp]
-lemma equiv_intro : ((Γ ⊢ᵈ[D] (φ ⇒ ψ)) ∧ (Γ ⊢ᵈ[D] (ψ ⇒ φ))) → (Γ ⊢ᵈ[D] (φ ⇔ ψ)) := by
+lemma IntroEquiv : ((Γ ⊢ᵈ[D] (φ ⇒ ψ)) ∧ (Γ ⊢ᵈ[D] (ψ ⇒ φ))) → (Γ ⊢ᵈ[D] (φ ⇔ ψ)) := by
   intro H;
   simp [EquivDef];
-  exact IntroConj H;
+  have := IntroConj' H;
+  aesop;
+alias equiv_intro := IntroEquiv
 
 @[simp]
-lemma equiv_comm : (Γ ⊢ᵈ[D] (φ ⇔ ψ)) → (Γ ⊢ᵈ[D] (ψ ⇔ φ)) := by aesop;
+lemma CommEquiv : (Γ ⊢ᵈ[D] (φ ⇔ ψ)) → (Γ ⊢ᵈ[D] (ψ ⇔ φ)) := by aesop;
+alias equiv_comm := CommEquiv
 
 @[simp]
-lemma equiv_mp : (Γ ⊢ᵈ[D] (φ ⇔ ψ)) → (Γ ⊢ᵈ[D] φ ⇒ ψ) := by
+lemma EquivMP : (Γ ⊢ᵈ[D] (φ ⇔ ψ)) → (Γ ⊢ᵈ[D] φ ⇒ ψ) := by
   intro H;
   simp [EquivDef] at H;
   exact ElimConjL H;
+alias equiv_mp := EquivMP
 
 @[simp]
-lemma equiv_mpr : (Γ ⊢ᵈ[D] (φ ⇔ ψ)) → (Γ ⊢ᵈ[D] ψ ⇒ φ) := λ H => equiv_mp $ equiv_comm H
+lemma EquivMPR : (Γ ⊢ᵈ[D] (φ ⇔ ψ)) → (Γ ⊢ᵈ[D] ψ ⇒ φ) := λ H => equiv_mp $ equiv_comm H
+alias equiv_mpr := EquivMPR
 
 @[simp]
-lemma equiv_neg : (Γ ⊢ᵈ[D] (φ ⇔ ψ)) → (Γ ⊢ᵈ[D] ((~φ : α) ⇔ ~ψ)) := by 
+lemma IntroNegEquiv : (Γ ⊢ᵈ[D] (φ ⇔ ψ)) → (Γ ⊢ᵈ[D] ((~φ : α) ⇔ ~ψ)) := by 
   intro h;
   apply equiv_intro;
   exact ⟨contrapose₁ $ equiv_mpr h, contrapose₁ $ equiv_mp h⟩;
+alias equiv_neg := IntroNegEquiv
 
-lemma equiv_pick_left : (Γ ⊢ᵈ[D] (φ ⇔ ψ)) → (Γ ⊢ᵈ[D] φ) → (Γ ⊢ᵈ[D] ψ) := by
+lemma ElimEquivL : ((Γ ⊢ᵈ[D] (φ ⇔ ψ)) ∧ (Γ ⊢ᵈ[D] φ)) → (Γ ⊢ᵈ[D] ψ) := by
+  intro H;
+  exact ElimImply' ⟨equiv_mp H.left, H.right⟩;
+
+lemma ElimEquivL' : (Γ ⊢ᵈ[D] (φ ⇔ ψ)) → (Γ ⊢ᵈ[D] φ) → (Γ ⊢ᵈ[D] ψ) := by
   intro H₁ H₂;
-  exact ElimImply ⟨equiv_mp H₁, H₂⟩;
+  exact ElimImply' ⟨equiv_mp H₁, H₂⟩;
+alias equiv_pick_left := ElimEquivL'
 
-lemma equiv_pick_right : (Γ ⊢ᵈ[D] (φ ⇔ ψ)) → (Γ ⊢ᵈ[D] ψ) → (Γ ⊢ᵈ[D] φ) := λ H => equiv_pick_left $ equiv_comm H
+lemma ElimEquivR' : (Γ ⊢ᵈ[D] (φ ⇔ ψ)) → (Γ ⊢ᵈ[D] ψ) → (Γ ⊢ᵈ[D] φ) := λ H => equiv_pick_left $ CommEquiv H
+alias equiv_pick_right := ElimEquivR'
 
-lemma equiv_pick_neg_left : (Γ ⊢ᵈ[D] (φ ⇔ ψ)) → (Γ ⊢ᵈ[D] (~φ)) → (Γ ⊢ᵈ[D] (~ψ)) := by
+lemma NegElimEquivL' : (Γ ⊢ᵈ[D] (φ ⇔ ψ)) → (Γ ⊢ᵈ[D] (~φ)) → (Γ ⊢ᵈ[D] (~ψ)) := by
   intro H₁ H₂;
-  exact ElimImply ⟨equiv_mp $ equiv_neg H₁, H₂⟩;
+  exact ElimImply' ⟨equiv_mp $ equiv_neg H₁, H₂⟩;
+alias equiv_pick_neg_left := NegElimEquivL'
   
-lemma equiv_pick_neg_right : (Γ ⊢ᵈ[D] φ ⇔ ψ) → (Γ ⊢ᵈ[D] ~ψ) → (Γ ⊢ᵈ[D] (~φ)) := λ H => equiv_pick_neg_left $ equiv_comm H
+lemma NegElimEquivR' : (Γ ⊢ᵈ[D] φ ⇔ ψ) → (Γ ⊢ᵈ[D] ~ψ) → (Γ ⊢ᵈ[D] (~φ)) := λ H => equiv_pick_neg_left $ equiv_comm H
+alias equiv_pick_neg_right := NegElimEquivR'
 
-lemma equiv_trans : (Γ ⊢ᵈ[D] (φ ⇔ ψ)) → (Γ ⊢ᵈ[D] (ψ ⇔ ρ)) → (Γ ⊢ᵈ[D] (φ ⇔ ρ)) := by
+lemma EquivTrans : (Γ ⊢ᵈ[D] (φ ⇔ ψ)) → (Γ ⊢ᵈ[D] (ψ ⇔ ρ)) → (Γ ⊢ᵈ[D] (φ ⇔ ρ)) := by
   intro H₁ H₂;
   apply equiv_intro;
   apply And.intro;
@@ -111,15 +132,19 @@ lemma equiv_trans : (Γ ⊢ᵈ[D] (φ ⇔ ψ)) → (Γ ⊢ᵈ[D] (ψ ⇔ ρ)) �
   . have H₁ := equiv_mpr H₁;
     have H₂ := equiv_mpr H₂;
     exact imply_trans ⟨H₂, H₁⟩;
+alias equiv_trans := EquivTrans
 
-lemma equiv_decomp : (Γ ⊢ᵈ[D] (φ ⇔ ψ)) → ((Γ ⊢ᵈ[D] φ) ↔ (Γ ⊢ᵈ[D] ψ)) := by
+lemma EquivDecomp : (Γ ⊢ᵈ[D] (φ ⇔ ψ)) → ((Γ ⊢ᵈ[D] φ) ↔ (Γ ⊢ᵈ[D] ψ)) := by
   intro H;
-  exact ⟨λ h => ElimImply ⟨equiv_mp H, h⟩, λ h => ElimImply ⟨equiv_mpr H, h⟩⟩
+  exact ⟨λ h => ElimImply' ⟨equiv_mp H, h⟩, λ h => ElimImply' ⟨equiv_mpr H, h⟩⟩
+alias equiv_decomp := EquivDecomp
 
-lemma unequiv_left : (Γ ⊢ᵈ[D] (φ ⇔ ψ)) → (Γ ⊬ᵈ[D] φ) → (Γ ⊬ᵈ[D] ψ) := by
+lemma UnducibleElimEquivL : (Γ ⊢ᵈ[D] (φ ⇔ ψ)) → (Γ ⊬ᵈ[D] φ) → (Γ ⊬ᵈ[D] ψ) := by
   intro H₁ H₂;
   exact (equiv_decomp H₁).not.mp H₂;
+alias unequiv_left := UnducibleElimEquivL
 
-lemma unequiv_right : (Γ ⊢ᵈ[D] (φ ⇔ ψ)) → (Γ ⊬ᵈ[D] ψ) → (Γ ⊬ᵈ[D] φ) := λ H => unequiv_left $ equiv_comm H
+lemma UnducibleElimEquivR : (Γ ⊢ᵈ[D] (φ ⇔ ψ)) → (Γ ⊬ᵈ[D] ψ) → (Γ ⊬ᵈ[D] φ) := λ H => unequiv_left $ equiv_comm H
+alias unequiv_right := UnducibleElimEquivR
 
 end ModalLogic.PropositionalLogic.DeductionSystem

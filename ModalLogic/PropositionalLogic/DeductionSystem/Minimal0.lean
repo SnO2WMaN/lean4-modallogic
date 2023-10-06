@@ -1,13 +1,12 @@
+import ModalLogic.SupplymentSimp
 import ModalLogic.PropositionalLogic.DeductionSystem.Notations
 
 open ModalLogic.PropositionalLogic.Axioms
 open ModalLogic.PropositionalLogic.DeductionSystem
-open IsMinimal₀ HasIntroImply
+open HasWeakenContext HasIntroImply HasElimImply
 
-open Finset 
+open Finset
 attribute [simp] union_comm insert_eq
-
-attribute [simp] ElimImply
 
 namespace ModalLogic.PropositionalLogic.DeductionSystem
 
@@ -32,7 +31,7 @@ theorem S (φ ψ ξ) : Γ ⊢ᵈ[D] (Axioms.S φ ψ ξ) := by
 @[simp] 
 theorem S' {φ ψ ξ} : Γ ⊢ᵈ[D] (Axioms.S φ ψ ξ) := S φ ψ ξ
 
-lemma imply_trans : ((Γ ⊢ᵈ[D] (φ ⇒ ψ)) ∧ (Γ ⊢ᵈ[D] (ψ ⇒ ξ))) → (Γ ⊢ᵈ[D] (φ ⇒ ξ)) := by
+lemma ImplyTrans : ((Γ ⊢ᵈ[D] (φ ⇒ ψ)) ∧ (Γ ⊢ᵈ[D] (ψ ⇒ ξ))) → (Γ ⊢ᵈ[D] (φ ⇒ ξ)) := by
   intro H₁;
   have H₁l : (Γ ∪ {φ}) ⊢ᵈ[D] φ ⇒ ψ := H₁.left;
   have H₁r : (Γ ∪ {φ}) ⊢ᵈ[D] ψ ⇒ ξ := H₁.right;
@@ -40,6 +39,7 @@ lemma imply_trans : ((Γ ⊢ᵈ[D] (φ ⇒ ψ)) ∧ (Γ ⊢ᵈ[D] (ψ ⇒ ξ))) 
   have h₂ := ElimImply ⟨H₁l, h₁⟩;
   have h₃ := ElimImply ⟨H₁r, h₂⟩;
   aesop;
+alias imply_trans := ImplyTrans
 
 variable [HasBot α] [HasNeg α] [HasNegDef α]
 
@@ -52,10 +52,13 @@ theorem DNI : Γ ⊢ᵈ[D] (Axioms.DNI φ) := by
   aesop;
 
 @[simp]
-theorem IntroDN : (Γ ⊢ᵈ[D] (φ)) → (Γ ⊢ᵈ[D] (~~φ)) := λ h => ElimImply ⟨DNI, h⟩
+theorem IntroDN : (Γ ⊢ᵈ[D] (φ)) → (Γ ⊢ᵈ[D] (~~φ)) := by
+  intro H;
+  have := ElimImply ⟨(DNI : Γ ⊢ᵈ[D] Axioms.DNI φ), H⟩;
+  aesop;
 
 @[simp]
-theorem contrapose₁ : (Γ ⊢ᵈ[D] (φ ⇒ ψ)) → (Γ ⊢ᵈ[D] (~ψ ⇒ ~φ)) := by
+theorem Contrapose₁ : (Γ ⊢ᵈ[D] (φ ⇒ ψ)) → (Γ ⊢ᵈ[D] (~ψ ⇒ ~φ)) := by
   intro H₁;
   simp [HasNegDef.NegDef];
 
@@ -65,6 +68,7 @@ theorem contrapose₁ : (Γ ⊢ᵈ[D] (φ ⇒ ψ)) → (Γ ⊢ᵈ[D] (~ψ ⇒ ~�
   have h₃ := ElimImply ⟨H₁, h₂⟩;
   have h₄ := ElimImply ⟨h₁, h₃⟩;
   aesop;
+alias contrapose₁ := Contrapose₁
 
 lemma CON₁ : Γ ⊢ᵈ[D] (Axioms.Con₁ φ ψ) := by
   have h₁ : (Γ ∪ {φ ⇒ ψ, ~ψ}) ⊢ᵈ[D] φ ⇒ ψ := by simp;
@@ -74,14 +78,15 @@ lemma CON₁ : Γ ⊢ᵈ[D] (Axioms.Con₁ φ ψ) := by
   aesop;
 
 @[simp]
-theorem contrapose₂ : (Γ ⊢ᵈ[D] (φ ⇒ ~ψ)) → (Γ ⊢ᵈ[D] (ψ ⇒ ~φ)) := by
+theorem Contrapose₂ : (Γ ⊢ᵈ[D] (φ ⇒ ~ψ)) → (Γ ⊢ᵈ[D] (ψ ⇒ ~φ)) := by
   intro H;
   have H₁ : (Γ ∪ {ψ} ∪ {φ}) ⊢ᵈ[D] φ ⇒ ~ψ := H;
   have h₁ : (Γ ∪ {ψ} ∪ {φ}) ⊢ᵈ[D] φ := by simp;
   have h₂ : (Γ ∪ {ψ} ∪ {φ}) ⊢ᵈ[D] ψ := by simp;
   have h₃ := ElimImply ⟨H₁, h₁⟩;
-  have h₄ := intro_bot ⟨h₃, h₂⟩;
+  have h₄ := ElimNeg ⟨h₃, h₂⟩;
   aesop;
+alias contrapose₂ := Contrapose₂
 
 lemma CON₂ : Γ ⊢ᵈ[D] (Axioms.Con₂ φ ψ) := by
   have h₁ : (Γ ∪ {φ ⇒ ~ψ} ∪ {ψ}) ⊢ᵈ[D] φ ⇒ ~ψ := by simp;
@@ -89,5 +94,9 @@ lemma CON₂ : Γ ⊢ᵈ[D] (Axioms.Con₂ φ ψ) := by
   have h₃ := contrapose₂ h₁;
   have _ := ElimImply ⟨h₃, h₂⟩;
   aesop;
+
+lemma DT : (Γ ⊢ᵈ[D] (φ ⇒ ψ)) → ((Γ ∪ {φ}) ⊢ᵈ[D] ψ) := by
+  intro H;
+  exact ElimImply' ⟨WeakenContext H, (by simp)⟩;
 
 end ModalLogic.PropositionalLogic.DeductionSystem
