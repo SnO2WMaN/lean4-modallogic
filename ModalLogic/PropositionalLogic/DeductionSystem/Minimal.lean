@@ -3,10 +3,7 @@ import ModalLogic.PropositionalLogic.DeductionSystem.Minimal0
 
 open ModalLogic.PropositionalLogic.Axioms
 open ModalLogic.PropositionalLogic.DeductionSystem
-open IsMinimal HasMP HasDT
-
-open Finset 
-attribute [simp] union_comm insert_eq
+open IsMinimal HasDT HasElimImply
 
 namespace ModalLogic.PropositionalLogic.DeductionSystem
 
@@ -18,7 +15,6 @@ theorem conj_decomp : (Γ ⊢ᵈ[D] (φ ⋏ ψ)) → ((Γ ⊢ᵈ[D] φ) ∧ (Γ 
   constructor;
   exact ElimConjL H;
   exact ElimConjR H;
-
 
 @[simp]
 theorem conj_comm : (Γ ⊢ᵈ[D] (φ ⋏ ψ)) → (Γ ⊢ᵈ[D] (ψ ⋏ φ)) := by
@@ -33,23 +29,23 @@ theorem conj_contract: (Γ ⊢ᵈ[D] φ ⋏ φ) → (Γ ⊢ᵈ[D] φ) := ElimCon
 
 lemma conj_dilemma_elim_left : ((Γ ⊢ᵈ[D] (φ ⋏ ψ) ⇒ ρ) ∧ (Γ ⊢ᵈ[D] φ ⇒ ψ)) → (Γ ⊢ᵈ[D] φ ⇒ ρ) := by
   intro H;
-  repeat apply DT.mpr;
   have Hl : (Γ ∪ {φ}) ⊢ᵈ[D] φ ⋏ ψ ⇒ ρ := H.left;
   have Hr : (Γ ∪ {φ}) ⊢ᵈ[D] φ ⇒ ψ:= H.right;
   have h₁ : (Γ ∪ {φ}) ⊢ᵈ[D] φ := by simp;
-  have h₂ : (Γ ∪ {φ}) ⊢ᵈ[D] ψ := MP Hr h₁;
+  have h₂ : (Γ ∪ {φ}) ⊢ᵈ[D] ψ := ElimImply ⟨Hr, h₁⟩;
   have h₃ := IntroConj ⟨h₁, h₂⟩;
-  exact MP Hl h₃;
+  have h₄ := ElimImply ⟨Hl, h₃⟩;
+  aesop;
 
 lemma conj_dilemma_elim_right : ((Γ ⊢ᵈ[D] (φ ⋏ ψ) ⇒ ρ) ∧ (Γ ⊢ᵈ[D] ψ ⇒ φ)) → (Γ ⊢ᵈ[D] ψ ⇒ ρ) := by
   intro H;
-  apply DT.mpr;
   have Hl : (Γ ∪ {ψ}) ⊢ᵈ[D] φ ⋏ ψ ⇒ ρ := H.left;
   have Hr : (Γ ∪ {ψ}) ⊢ᵈ[D] ψ ⇒ φ := H.right;
   have h₁ : (Γ ∪ {ψ}) ⊢ᵈ[D] ψ := by simp;
-  have h₂ : (Γ ∪ {ψ}) ⊢ᵈ[D] φ := MP Hr h₁;
+  have h₂ : (Γ ∪ {ψ}) ⊢ᵈ[D] φ := ElimImply ⟨Hr, h₁⟩;
   have h₃ := IntroConj ⟨h₂, h₁⟩;
-  exact MP Hl h₃;
+  have h₄ := ElimImply ⟨Hl, h₃⟩;
+  aesop;
 
 variable [HasBot α] [HasNeg α] [HasNegDef α]
 
@@ -58,20 +54,22 @@ attribute [simp] NegDef
 
 lemma NonContradiction {φ} : (Γ ⊢ᵈ[D] (Axioms.NonContradiction φ)) := by
   simp only [Axioms.NonContradiction, NegDef];
-  repeat apply DT.mpr;
   have h₁ : (Γ ∪ {φ ⋏ (φ ⇒ ⊥)}) ⊢ᵈ[D] φ ⋏ (φ ⇒ ⊥) := by simp;
   have h₁l := ElimConjL h₁;
   have h₁r := ElimConjR h₁;
-  exact MP h₁r h₁l;
-
+  have h₂ := ElimImply ⟨h₁r, h₁l⟩;
+  aesop;
 
 variable [HasEquiv α] [HasEquivDef α]
 
 open HasEquivDef
-attribute [simp] EquivDef
+attribute [simp] EquivDef IntroConj
 
 @[simp]
-lemma equiv_intro : ((Γ ⊢ᵈ[D] (φ ⇒ ψ)) ∧ (Γ ⊢ᵈ[D] (ψ ⇒ φ))) → (Γ ⊢ᵈ[D] (φ ⇔ ψ)) := by aesop;
+lemma equiv_intro : ((Γ ⊢ᵈ[D] (φ ⇒ ψ)) ∧ (Γ ⊢ᵈ[D] (ψ ⇒ φ))) → (Γ ⊢ᵈ[D] (φ ⇔ ψ)) := by
+  intro H;
+  simp [EquivDef];
+  exact IntroConj H;
 
 @[simp]
 lemma equiv_comm : (Γ ⊢ᵈ[D] (φ ⇔ ψ)) → (Γ ⊢ᵈ[D] (ψ ⇔ φ)) := by aesop;
@@ -93,13 +91,13 @@ lemma equiv_neg : (Γ ⊢ᵈ[D] (φ ⇔ ψ)) → (Γ ⊢ᵈ[D] ((~φ : α) ⇔ ~
 
 lemma equiv_pick_left : (Γ ⊢ᵈ[D] (φ ⇔ ψ)) → (Γ ⊢ᵈ[D] φ) → (Γ ⊢ᵈ[D] ψ) := by
   intro H₁ H₂;
-  exact MP (equiv_mp H₁) H₂;
+  exact ElimImply ⟨equiv_mp H₁, H₂⟩;
 
 lemma equiv_pick_right : (Γ ⊢ᵈ[D] (φ ⇔ ψ)) → (Γ ⊢ᵈ[D] ψ) → (Γ ⊢ᵈ[D] φ) := λ H => equiv_pick_left $ equiv_comm H
 
 lemma equiv_pick_neg_left : (Γ ⊢ᵈ[D] (φ ⇔ ψ)) → (Γ ⊢ᵈ[D] (~φ)) → (Γ ⊢ᵈ[D] (~ψ)) := by
   intro H₁ H₂;
-  exact MP (equiv_mp (equiv_neg H₁)) H₂;
+  exact ElimImply ⟨equiv_mp $ equiv_neg H₁, H₂⟩;
   
 lemma equiv_pick_neg_right : (Γ ⊢ᵈ[D] φ ⇔ ψ) → (Γ ⊢ᵈ[D] ~ψ) → (Γ ⊢ᵈ[D] (~φ)) := λ H => equiv_pick_neg_left $ equiv_comm H
 
@@ -116,7 +114,7 @@ lemma equiv_trans : (Γ ⊢ᵈ[D] (φ ⇔ ψ)) → (Γ ⊢ᵈ[D] (ψ ⇔ ρ)) �
 
 lemma equiv_decomp : (Γ ⊢ᵈ[D] (φ ⇔ ψ)) → ((Γ ⊢ᵈ[D] φ) ↔ (Γ ⊢ᵈ[D] ψ)) := by
   intro H;
-  exact ⟨λ h => MP (equiv_mp H) h, λ h => MP (equiv_mpr H) h⟩
+  exact ⟨λ h => ElimImply ⟨equiv_mp H, h⟩, λ h => ElimImply ⟨equiv_mpr H, h⟩⟩
 
 lemma unequiv_left : (Γ ⊢ᵈ[D] (φ ⇔ ψ)) → (Γ ⊬ᵈ[D] φ) → (Γ ⊬ᵈ[D] ψ) := by
   intro H₁ H₂;

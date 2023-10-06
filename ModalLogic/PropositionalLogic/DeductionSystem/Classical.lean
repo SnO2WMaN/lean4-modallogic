@@ -3,38 +3,33 @@ import ModalLogic.PropositionalLogic.DeductionSystem.Minimal0
 import ModalLogic.PropositionalLogic.DeductionSystem.Minimal
 import ModalLogic.PropositionalLogic.DeductionSystem.Intuitional
 
-open ModalLogic.PropositionalLogic.Axioms
-open ModalLogic.PropositionalLogic.DeductionSystem
-open IsMinimal HasMP HasDT
-
-open Finset 
-attribute [simp] union_comm insert_eq
+open ModalLogic.PropositionalLogic
+open Axioms
+open DeductionSystem IsMinimal HasElimImply HasElimDN 
 
 namespace ModalLogic.PropositionalLogic.DeductionSystem
 
 variable [DecidableEq α] [HasImply α] [HasDisj α] [HasConj α] [HasNeg α]
 variable {D : DeductionSystem α} [IsClassical D]
 
-lemma contrapose₃ : (Γ ⊢ᵈ[D] (~φ ⇒ ψ)) → (Γ ⊢ᵈ[D] (~ψ ⇒ φ)) := by
-  sorry
-  /-
-  intro H₁;
-  
-  -- repeat apply DT.mpr;
-  have h₁ : (Γ ∪ {~φ} ∪ {~ψ}) ⊢ᵈ[D] ψ := ↑(DT.mp H₁);
-  have h₂ : (Γ ∪ {~φ} ∪ {~ψ}) ⊢ᵈ[D] ψ ⇒ ⊥ := by simp;
-  have h₃ : (Γ ∪ {~φ} ∪ {~ψ}) ⊢ᵈ[D] ⊥ := MP h₂ h₁;
-  sorry
-  -/
+variable [HasBot α] [HasNegDef α]
 
-lemma contrapose₄ : (Γ ⊢ᵈ[D] (~φ ⇒ ~ψ)) → (Γ ⊢ᵈ[D] (ψ ⇒ φ)) := by
-  sorry
-  /-
-  simp;
+@[simp]
+lemma contrapose₃ : (Γ ⊢ᵈ[D] (~φ ⇒ ψ)) → (Γ ⊢ᵈ[D] (~ψ ⇒ φ)) := by
   intro H;
-  repeat apply DT.mpr;
-  sorry
-  -/
+  have h₁ : (Γ ∪ {~ψ}) ⊢ᵈ[D] ~ψ := by simp;
+  have h₂ : (Γ ∪ {~ψ}) ⊢ᵈ[D] ~ψ ⇒ ~~φ := contrapose₁ H;
+  have h₃ : (Γ ∪ {~ψ}) ⊢ᵈ[D] ~~φ := ElimImply ⟨h₂, h₁⟩;
+  aesop;
+
+@[simp]
+lemma contrapose₄ : (Γ ⊢ᵈ[D] (~φ ⇒ ~ψ)) → (Γ ⊢ᵈ[D] (ψ ⇒ φ)) := by
+  intro H;
+  have h₁ : (Γ ∪ {ψ}) ⊢ᵈ[D] ψ := by simp;
+  have h₂ : (Γ ∪ {ψ}) ⊢ᵈ[D] ~~ψ := IntroDN h₁;
+  have h₃ : (Γ ∪ {ψ}) ⊢ᵈ[D] ~~ψ ⇒ ~~φ := contrapose₁ H;
+  have h₄ : (Γ ∪ {ψ}) ⊢ᵈ[D] ~~φ := ElimImply ⟨h₃, h₂⟩;
+  aesop;
 
 lemma imply_elim_ant_dne : (Γ ⊢ᵈ[D] (~~φ ⇒ ψ)) → (Γ ⊢ᵈ[D] (φ ⇒ ψ)) := by
   intro H₁;

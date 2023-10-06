@@ -4,6 +4,8 @@ import ModalLogic.PropositionalLogic.Notation
 import ModalLogic.PropositionalLogic.Axioms
 
 open Finset
+attribute [simp] union_comm insert_eq
+
 open ModalLogic.PropositionalLogic
 
 namespace ModalLogic.PropositionalLogic
@@ -35,9 +37,10 @@ variable {D : DeductionSystem α}
 instance : Coe (∅ ⊢ᵈ[D] φ) (⊢ᵈ[D] φ) := ⟨D.NoContext.mp⟩
 instance : Coe (⊢ᵈ[D] φ) (∅ ⊢ᵈ[D] φ) := ⟨D.NoContext.mpr⟩
 
+@[simp]
 lemma weakenContext {Γ Δ φ} : (Γ ⊢ᵈ[D] φ) → ((Γ ∪ Δ) ⊢ᵈ[D] φ) := by sorry
 
-instance : Coe (Γ ⊢ᵈ[D] φ) ((Γ ∪ Δ) ⊢ᵈ[D] φ) := ⟨weakenContext⟩ 
+instance {Δ : Context α} : Coe (Γ ⊢ᵈ[D] φ) ((Γ ∪ Δ) ⊢ᵈ[D] φ) := ⟨weakenContext⟩ 
 instance : Coe (⊢ᵈ[D] φ) (Γ ⊢ᵈ[D] φ) := ⟨by intro h; have : (∅ ∪ Γ) ⊢ᵈ[D] φ := h; aesop;⟩
 
 @[simp]
@@ -56,56 +59,66 @@ class HasDT extends (DeductionSystem α) where
   DT {φ ψ : α} : (Γ ⊢ᵈ[D] (φ ⇒ ψ)) ↔ ((Γ ∪ {φ}) ⊢ᵈ[D] ψ)
 attribute [simp] HasDT.DT
 
-variable [HasDT D] in
-@[simp] 
-theorem equality : Γ ⊢ᵈ[D] φ ⇒ φ := by simp;
+class HasIntroImply extends (DeductionSystem α) where
+  IntroImply {φ ψ : α} : ((Γ ∪ {φ}) ⊢ᵈ[D] ψ) → (Γ ⊢ᵈ[D] φ ⇒ ψ)
+attribute [simp] HasIntroImply.IntroImply
+attribute [aesop unsafe 50% apply] HasIntroImply.IntroImply
 
-class HasMP extends (DeductionSystem α) where
-  MP {φ ψ : α} : (Γ ⊢ᵈ[D] (φ ⇒ ψ)) → (Γ ⊢ᵈ[D] φ) → (Γ ⊢ᵈ[D] ψ)
-attribute [simp] HasMP.MP
-
-variable [HasBot α] [HasNeg α] [HasNegDef α] {D} [HasMP D] in
-@[simp]
-theorem bot : (Γ ⊢ᵈ[D] ~φ) → (Γ ⊢ᵈ[D] φ) → (Γ ⊢ᵈ[D] ⊥) := by
-  intro H₁ H₂;
-  simp_all;
-  exact HasMP.MP H₁ H₂
-  
+class HasElimImply extends (DeductionSystem α) where
+  ElimImply {φ ψ : α} : ((Γ ⊢ᵈ[D] φ ⇒ ψ) ∧ (Γ ⊢ᵈ[D] φ)) → (Γ ⊢ᵈ[D] ψ)
+attribute [simp] HasElimImply.ElimImply
 
 class HasIntroDisj extends (DeductionSystem α) where
   IntroDisjL {φ ψ : α} : (Γ ⊢ᵈ[D] φ) → (Γ ⊢ᵈ[D] (φ ⋎ ψ))
   IntroDisjR {φ ψ : α} : (Γ ⊢ᵈ[D] ψ) → (Γ ⊢ᵈ[D] (φ ⋎ ψ)) 
 attribute [simp] HasIntroDisj.IntroDisjL HasIntroDisj.IntroDisjR
 
+class HasElimDisj extends (DeductionSystem α) where
+  ElimDisj {φ ψ ξ : α} : ((Γ ⊢ᵈ[D] φ ⋎ ψ) ∧ (Γ ⊢ᵈ[D] φ ⇒ ξ) ∧ (Γ ⊢ᵈ[D] ψ ⇒ ξ)) → (Γ ⊢ᵈ[D] ξ)
+attribute [simp] HasElimDisj.ElimDisj
 
 class HasIntroConj extends (DeductionSystem α) where
   IntroConj {φ ψ : α} : ((Γ ⊢ᵈ[D] φ) ∧ (Γ ⊢ᵈ[D] ψ)) → (Γ ⊢ᵈ[D] (φ ⋏ ψ))
-attribute [simp] HasIntroConj.IntroConj
-
+attribute [simp] HasElimDisj.ElimDisj
 
 class HasElimConj extends (DeductionSystem α) where
   ElimConjL {φ ψ : α} : (Γ ⊢ᵈ[D] (φ ⋏ ψ)) → (Γ ⊢ᵈ[D] φ)
   ElimConjR {φ ψ : α} : (Γ ⊢ᵈ[D] (φ ⋏ ψ)) → (Γ ⊢ᵈ[D] ψ)
-attribute [simp] HasElimConj.ElimConjL HasElimConj.ElimConjR 
-
+attribute [simp] HasElimConj.ElimConjL HasElimConj.ElimConjR
 
 class HasExplode extends (DeductionSystem α) where
   Explode (φ : α) : (Γ ⊢ᵈ[D] ⊥) → (Γ ⊢ᵈ[D] φ)
 attribute [simp] HasExplode.Explode
+attribute [aesop unsafe 50% apply] HasExplode.Explode
 
-class HasDoubleNegElim extends (DeductionSystem α) where
-  DoubleNegElim {φ : α} : (Γ ⊢ᵈ[D] ~~φ) → (Γ ⊢ᵈ[D] φ)
-attribute [simp] HasDoubleNegElim.DoubleNegElim
+class HasElimDN extends (DeductionSystem α) where
+  ElimDN {φ : α} : (Γ ⊢ᵈ[D] ~~φ) → (Γ ⊢ᵈ[D] φ)
+attribute [simp] HasElimDN.ElimDN
+attribute [aesop unsafe 50% apply] HasElimDN.ElimDN
 
 end Rules
 
+section Lemmas
+
+variable [HasImply α] [HasBot α] [HasNeg α] [HasNegDef α]
+variable {D : DeductionSystem α}
+
+@[simp] 
+lemma equality [HasIntroImply D] : Γ ⊢ᵈ[D] φ ⇒ φ := by simp;
+
+lemma intro_bot [HasElimImply D] : ((Γ ⊢ᵈ[D] ~φ) ∧ (Γ ⊢ᵈ[D] φ)) → (Γ ⊢ᵈ[D] ⊥) := by
+  intro H₁;
+  simp_all;
+  exact HasElimImply.ElimImply H₁;
+  
+end Lemmas
 
 section BasicSystem
 
 variable (D : DeductionSystem α)
 variable [HasImply α] [HasBot α] [HasDisj α] [HasConj α] [HasNeg α]
 
-class IsMinimal₀ extends (HasDT D), (HasMP D)
+class IsMinimal₀ extends (HasIntroImply D), (HasElimImply D)
 
 class IsMinimal extends (IsMinimal₀ D), (HasIntroDisj D), (HasIntroConj D), (HasElimConj D)
 instance [IsMinimal D] : IsMinimal₀ D := inferInstance
@@ -113,8 +126,9 @@ instance [IsMinimal D] : IsMinimal₀ D := inferInstance
 class IsIntuitional extends (IsMinimal D), (HasExplode D)
 instance [IsIntuitional D] : IsMinimal D := inferInstance
 
-class IsClassical extends (IsMinimal D), (HasDoubleNegElim D)
+class IsClassical extends (IsMinimal D), (HasElimDN D)
 instance [IsClassical D] : IsMinimal D := inferInstance
+instance [HasNegDef α] [IsClassical D] : IsIntuitional D := by constructor; aesop;
 
 end BasicSystem
 
