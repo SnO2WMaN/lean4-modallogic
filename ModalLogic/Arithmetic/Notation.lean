@@ -1,6 +1,9 @@
-import ModalLogic.PropositionalLogic.DeductionSystem
+-- import ModalLogic.PropositionalLogic.DeductionSystem
+import ModalLogic.PropositionalLogic.DeductionSystem.Notations
+import ModalLogic.PropositionalLogic.DeductionSystem.Minimal
 
-open ModalLogic.PropositionalLogic DeductionSystem
+open ModalLogic.PropositionalLogic
+open ModalLogic.PropositionalLogic.DeductionSystem
 
 namespace ModalLogic.Arithmetic
 
@@ -87,9 +90,9 @@ class HasFormalDeductionTheorem extends Arithmetic α where
   /-- Formalized deduction theorem -/
   FDT {σ π : Sentence α} : (⊢ₐ[T ∔ Δ] Pr[T ∔ Γ](σ ⇒ₐ π) ⇔ₐ Pr[T ∔ Γ ∪ {σ}](π))
 
-lemma HasFormalDeductionTheorem.FDT_neg {T : Arithmetic α} {Γ Δ} [HasMP T.toDeductionSystem] [HasDT T.toDeductionSystem] [HasFormalDeductionTheorem T Γ Δ] {σ π} 
+lemma HasFormalDeductionTheorem.FDT_neg {T : Arithmetic α} {Γ Δ} [IsMinimal T.toDeductionSystem] [HasFormalDeductionTheorem T Γ Δ] {σ π} 
   : (⊢ₐ[T ∔ Δ] ~ₐPr[T ∔ Γ](σ ⇒ₐ π) ⇔ₐ ~ₐPr[T ∔ Γ ∪ {σ}](π)) := by
-  suffices (⊢ₐ[T ∔ Δ] Pr[T ∔ Γ](σ ⇒ₐ π) ⇔ₐ Pr[T ∔ Γ ∪ {σ}](π)) from by exact T.deducible_equiv_neg this;
+  suffices (⊢ₐ[T ∔ Δ] Pr[T ∔ Γ](σ ⇒ₐ π) ⇔ₐ Pr[T ∔ Γ ∪ {σ}](π)) from by exact T.equiv_neg this;
   exact HasFormalDeductionTheorem.FDT
 
 def Incompleteness := ∃ σ, (⊬ₐ[T ∔ Γ] σ) ∧ (⊬ₐ[T ∔ Γ] ~ₐσ)
@@ -126,9 +129,9 @@ class FormalizedSigma1Completeness extends Arithmetic α where
 
 section
 
-variable {T : Arithmetic α} [HasMP T.toDeductionSystem] [HasDT T.toDeductionSystem] 
-variable [Derivability1 T Γ] [Derivability2 T Γ] [Derivability3 T Γ]
+variable {T : Arithmetic α} [IsMinimal T.toDeductionSystem]
 variable {Γ Δ} {σ π : Sentence α}
+variable [Derivability1 T Γ] [Derivability2 T Γ] [Derivability3 T Γ]
 
 open HasMP HasDT
 open Derivability1 Derivability2
@@ -139,6 +142,8 @@ lemma Provable.conj_distribute : (⊢ₐ[T ∔ Δ] Pr[T ∔ Γ](σ ⋏ₐ π)) �
   sorry
 
 lemma Provable.pr_negneg_intro : (⊢ₐ[T ∔ Δ] Pr[T ∔ Γ](σ)) → (⊢ₐ[T ∔ Δ] Pr[T ∔ Γ](~ₐ~ₐσ)) := by
+  have h₁ : ⊢ₐ[T ∔ Γ] Pr[T ∔ Γ](σ ⇒ₐ ~ₐ~ₐσ) := D1 DNI;
+  have h₂ : (⊢ₐ[T ∔ Γ] Pr[T ∔ Γ](σ)) → (⊢ₐ[T ∔ Γ] Pr[T ∔ Γ](~ₐ~ₐσ)) := MP $ MP D2 h₁;
   intro H;
   sorry
 
@@ -147,7 +152,7 @@ lemma Provable.not_pr_negneg_intro : (⊢ₐ[T ∔ Δ] ~ₐPr[T ∔ Γ](σ)) →
   sorry
 
 lemma Provable.noContradiction : (⊢ₐ[T ∔ Δ] (Pr[T ∔ Γ](σ) ⋏ₐ Pr[T ∔ Γ](~ₐσ)) ⇒ₐ Pr[T ∔ Γ](⊥ₐ)) := by
-  have h₁ : ⊢ₐ[T ∔ Γ] (σ ⋏ₐ ~ₐσ) ⇒ₐ ⊥ₐ := deducible_NonContradiction;
+  have h₁ : ⊢ₐ[T ∔ Γ] (σ ⋏ₐ ~ₐσ) ⇒ₐ ⊥ₐ := NonContradiction;
   have h₂ : ⊢ₐ[T ∔ Γ] Pr[T ∔ Γ](σ ⋏ₐ ~ₐσ) ⇒ₐ Pr[T ∔ Γ](⊥ₐ) := MP D2 (D1 h₁);
   have h₃ : (⊢ₐ[T ∔ Γ] Pr[T ∔ Γ](σ ⋏ₐ ~ₐσ))→  (⊢ₐ[T ∔ Γ] Pr[T ∔ Γ](⊥ₐ)) := MP h₂;
   
