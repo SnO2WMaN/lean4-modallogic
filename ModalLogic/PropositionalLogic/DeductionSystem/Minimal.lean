@@ -3,7 +3,7 @@ import ModalLogic.PropositionalLogic.DeductionSystem.Minimal0
 
 open ModalLogic.PropositionalLogic.Axioms
 open ModalLogic.PropositionalLogic.DeductionSystem
-open IsMinimal HasDT HasElimImply
+open IsMinimal HasElimImply
 
 namespace ModalLogic.PropositionalLogic.DeductionSystem
 

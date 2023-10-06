@@ -16,48 +16,26 @@ abbrev Context (α) := Finset α
 
 structure DeductionSystem (α) extends ProveSystem α where
   Deducts: Context α → α → Prop
-  NoContext : (Deducts ∅ φ) ↔ (Proves φ)
-  inContext : ∀ {Γ φ}, (φ ∈ Γ) → (Deducts Γ φ)
-
-attribute [simp] DeductionSystem.NoContext
-attribute [simp] DeductionSystem.inContext
+  NoContextEquality : (Deducts ∅ φ) ↔ (Proves φ)
+  InContext : ∀ {Γ φ}, (φ ∈ Γ) → (Deducts Γ φ)
 
 namespace DeductionSystem
 
 notation Γ " ⊢ᵈ[" D "] " φ => DeductionSystem.Deducts D Γ φ 
 notation Γ " ⊬ᵈ[" D "] " φ => ¬(Γ ⊢ᵈ[D] φ)
-notation "⊢ᵈ[" D "] " φ => ⊢[toProveSystem D] φ
+notation "⊢ᵈ[" D "] " φ => ∅ ⊢ᵈ[D] φ
 notation "⊬ᵈ[" D "] " φ => ¬(⊢ᵈ[D] φ)
 
-
-section Lemmas
-
-variable {D : DeductionSystem α}
-
-instance : Coe (∅ ⊢ᵈ[D] φ) (⊢ᵈ[D] φ) := ⟨D.NoContext.mp⟩
-instance : Coe (⊢ᵈ[D] φ) (∅ ⊢ᵈ[D] φ) := ⟨D.NoContext.mpr⟩
-
-@[simp]
-lemma weakenContext {Γ Δ φ} : (Γ ⊢ᵈ[D] φ) → ((Γ ∪ Δ) ⊢ᵈ[D] φ) := by sorry
-
-instance {Δ : Context α} : Coe (Γ ⊢ᵈ[D] φ) ((Γ ∪ Δ) ⊢ᵈ[D] φ) := ⟨weakenContext⟩ 
-instance : Coe (⊢ᵈ[D] φ) (Γ ⊢ᵈ[D] φ) := ⟨by intro h; have : (∅ ∪ Γ) ⊢ᵈ[D] φ := h; aesop;⟩
-
-@[simp]
-lemma trivial_context (φ : α) : {φ} ⊢ᵈ[D] φ := by aesop;
-
-end Lemmas
-
+attribute [simp] NoContextEquality InContext
 
 section Rules
 
 variable (D : DeductionSystem α)
 variable [HasImply α] [HasBot α] [HasDisj α] [HasConj α] [HasNeg α]
 
-variable [HasImply α] in
-class HasDT extends (DeductionSystem α) where
-  DT {φ ψ : α} : (Γ ⊢ᵈ[D] (φ ⇒ ψ)) ↔ ((Γ ∪ {φ}) ⊢ᵈ[D] ψ)
-attribute [simp] HasDT.DT
+class HasWeakenContext extends (DeductionSystem α) where
+  WeakenContext {Γ Δ φ} : (Γ ⊢ᵈ[D] φ) → ((Γ ∪ Δ) ⊢ᵈ[D] φ)
+attribute [simp] HasWeakenContext.WeakenContext
 
 class HasIntroImply extends (DeductionSystem α) where
   IntroImply {φ ψ : α} : ((Γ ∪ {φ}) ⊢ᵈ[D] ψ) → (Γ ⊢ᵈ[D] φ ⇒ ψ)
@@ -103,6 +81,12 @@ section Lemmas
 variable [HasImply α] [HasBot α] [HasNeg α] [HasNegDef α]
 variable {D : DeductionSystem α}
 
+instance : Coe (∅ ⊢ᵈ[D] φ) (⊢[D.toProveSystem] φ) := ⟨D.NoContextEquality.mp⟩
+instance : Coe (⊢ᵈ[D] φ) (∅ ⊢ᵈ[D] φ) := ⟨λ h => D.NoContextEquality.mpr h⟩
+
+@[simp]
+lemma trivial_context (φ : α) : {φ} ⊢ᵈ[D] φ := by aesop;
+
 @[simp] 
 lemma equality [HasIntroImply D] : Γ ⊢ᵈ[D] φ ⇒ φ := by simp;
 
@@ -110,7 +94,12 @@ lemma intro_bot [HasElimImply D] : ((Γ ⊢ᵈ[D] ~φ) ∧ (Γ ⊢ᵈ[D] φ)) �
   intro H₁;
   simp_all;
   exact HasElimImply.ElimImply H₁;
-  
+
+variable [HasWeakenContext D] {Δ : Context α} 
+
+instance : Coe (Γ ⊢ᵈ[D] φ) ((Γ ∪ Δ) ⊢ᵈ[D] φ) := ⟨HasWeakenContext.WeakenContext⟩ 
+instance : Coe (⊢ᵈ[D] φ) (Γ ⊢ᵈ[D] φ) := ⟨by intro h; have : (∅ ∪ Γ) ⊢ᵈ[D] φ := h; aesop;⟩
+
 end Lemmas
 
 section BasicSystem
@@ -118,7 +107,7 @@ section BasicSystem
 variable (D : DeductionSystem α)
 variable [HasImply α] [HasBot α] [HasDisj α] [HasConj α] [HasNeg α]
 
-class IsMinimal₀ extends (HasIntroImply D), (HasElimImply D)
+class IsMinimal₀ extends (HasIntroImply D), (HasElimImply D), (HasWeakenContext D)
 
 class IsMinimal extends (IsMinimal₀ D), (HasIntroDisj D), (HasIntroConj D), (HasElimConj D)
 instance [IsMinimal D] : IsMinimal₀ D := inferInstance

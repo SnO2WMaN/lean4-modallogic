@@ -11,39 +11,50 @@ variable (α : Type u)
 class HasBot where bot : α
 scoped[ModalLogic.PropositionalLogic] notation:70 "⊥" => HasBot.bot
 
-class HasImply where imply : α → α → α
-scoped[ModalLogic.PropositionalLogic] infixr:62 " ⇒ " => HasImply.imply
+class HasTop where top : α
+scoped[ModalLogic.PropositionalLogic] notation:70 "⊤" => HasTop.top
+
+
+class HasDisj where disj : α → α → α
+scoped[ModalLogic.PropositionalLogic] infixl:63 " ⋎ " => HasDisj.disj
+
+class HasConj where conj : α → α → α
+scoped[ModalLogic.PropositionalLogic] infixl:63 " ⋏ " => HasConj.conj
 
 class HasNeg where neg : α → α
 scoped[ModalLogic.PropositionalLogic] prefix:64 "~" => HasNeg.neg
+
+class HasImply where imply : α → α → α
+scoped[ModalLogic.PropositionalLogic] infixr:62 " ⇒ " => HasImply.imply
+
+class HasEquiv where equiv : α → α → α
+scoped[ModalLogic.PropositionalLogic] infixl:61 " ⇔ " => HasEquiv.equiv
+
+end Symbols
+
+
+section DefinedByOtherSymbols
+
+variable (α : Type u)
 
 class HasNegDef [HasNeg α] [HasBot α] [HasImply α] where 
   NegDef (φ : α) : (~φ) = (φ ⇒ ⊥)
 attribute [simp] HasNegDef.NegDef
 
-class HasTop where top : α
-scoped[ModalLogic.PropositionalLogic] notation:70 "⊤" => HasTop.top
-
-class HasDisj where disj : α → α → α
-scoped[ModalLogic.PropositionalLogic] infixl:63 " ⋎ " => HasDisj.disj
-
 class HasDisjDef [HasDisj α] [HasImply α] [HasNeg α] where 
   DisjDef (φ ψ : α) : (φ ⋎ ψ) = (~φ ⇒ ψ)
-
-class HasConj where conj : α → α → α
-scoped[ModalLogic.PropositionalLogic] infixl:63 " ⋏ " => HasConj.conj
+attribute [simp] HasDisjDef.DisjDef
 
 class HasConjDef [HasConj α] [HasImply α] [HasNeg α] where 
   ConjDef (φ ψ : α) : (φ ⋏ ψ) = ~(φ ⇒ ~ψ)
-
-class HasEquiv where equiv : α → α → α
-scoped[ModalLogic.PropositionalLogic] infixl:61 " ⇔ " => HasEquiv.equiv
+attribute [simp] HasConjDef.ConjDef
 
 class HasEquivDef [HasEquiv α] [HasImply α] [HasConj α] where 
   EquivDef (φ ψ : α) : (φ ⇔ ψ) = ((φ ⇒ ψ) ⋏ (ψ ⇒ φ))
 attribute [simp] HasEquivDef.EquivDef
 
-end Symbols
+end DefinedByOtherSymbols
+
 
 structure ProveSystem (α : Type u) where
   Proves: α → Prop
