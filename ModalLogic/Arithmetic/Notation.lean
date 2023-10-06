@@ -1,9 +1,6 @@
--- import ModalLogic.PropositionalLogic.DeductionSystem
-import ModalLogic.PropositionalLogic.DeductionSystem.Notations
-import ModalLogic.PropositionalLogic.DeductionSystem.Minimal
+import ModalLogic.PropositionalLogic.DeductionSystem
 
-open ModalLogic.PropositionalLogic
-open ModalLogic.PropositionalLogic.DeductionSystem
+open ModalLogic.PropositionalLogic DeductionSystem
 
 namespace ModalLogic.Arithmetic
 
@@ -73,8 +70,6 @@ notation:20 "⊬ₐ[" T " ∔ " Γ "] " σ => ¬(Arithmetic.Deducible_def T Γ �
 notation:20 "⊢ₐ[" T "] " σ => Arithmetic.Deducible_def T ∅ σ
 notation:20 "⊬ₐ[" T "] " σ => ¬(⊢ₐ[T] σ)
 
--- notation:20 "⊢ₐ[" T "] " σ => Arithmetic.Proves_def T σ 
-
 namespace Arithmetic
 
 variable (T : Arithmetic α) (Γ Δ : Context (Sentence α))
@@ -116,24 +111,24 @@ axiom HBConsistent_of_Sigma1Soundness {T : Arithmetic α} {Γ} : IsSigma1Sounds 
 @[simp] def GInconsistent := ¬(GConsistent T Γ)
 
 class Derivability1 extends Arithmetic α where
-  D1  : ∀ {σ}, (⊢ₐ[T ∔ Γ] σ) → (⊢ₐ[T ∔ Γ] (Pr[T ∔ Γ](σ)))
+  D1  : ∀ {σ}, (⊢ₐ[T ∔ Δ] σ) → (⊢ₐ[T ∔ Δ] (Pr[T ∔ Γ](σ)))
 
 class Derivability2 extends Arithmetic α where
-  D2 : ∀ {σ π}, ⊢ₐ[T ∔ Γ] (Pr[T ∔ Γ](σ ⇒ₐ π) ⇒ₐ (Pr[T ∔ Γ](σ) ⇒ₐ Pr[T ∔ Γ](π)))
+  D2 : ∀ {σ π}, ⊢ₐ[T ∔ Δ] (Pr[T ∔ Γ](σ ⇒ₐ π) ⇒ₐ (Pr[T ∔ Γ](σ) ⇒ₐ Pr[T ∔ Γ](π)))
 
 class Derivability3 extends Arithmetic α where
-  D3 : ∀ {σ}, ⊢ₐ[T ∔ Γ] ((Pr[T ∔ Γ](σ)) ⇒ₐ Pr[T ∔ Γ](Pr[T ∔ Γ](σ)))
+  D3 : ∀ {σ}, ⊢ₐ[T ∔ Δ] ((Pr[T ∔ Γ](σ)) ⇒ₐ Pr[T ∔ Γ](Pr[T ∔ Γ](σ)))
 
 class FormalizedSigma1Completeness extends Arithmetic α where
-  FS1C : ∀ {σ}, ⊢ₐ[T ∔ Γ] (σ ⇒ₐ Pr[T ∔ Γ](σ))
+  FS1C : ∀ {σ}, ⊢ₐ[T ∔ Δ] (σ ⇒ₐ Pr[T ∔ Γ](σ))
 
 section
 
 variable {T : Arithmetic α} [IsMinimal T.toDeductionSystem]
 variable {Γ Δ} {σ π : Sentence α}
-variable [Derivability1 T Γ] [Derivability2 T Γ] [Derivability3 T Γ]
+variable [Derivability1 T Γ Δ] [Derivability2 T Γ Δ] [Derivability3 T Γ Δ]
 
-open HasMP HasDT
+open HasElimImply HasIntroConj
 open Derivability1 Derivability2
 
 lemma Provable.conj_distribute : (⊢ₐ[T ∔ Δ] Pr[T ∔ Γ](σ ⋏ₐ π)) → (⊢ₐ[T ∔ Δ] (Pr[T ∔ Γ](σ) ⋏ₐ Pr[T ∔ Γ](π))) := by
@@ -141,59 +136,54 @@ lemma Provable.conj_distribute : (⊢ₐ[T ∔ Δ] Pr[T ∔ Γ](σ ⋏ₐ π)) �
   simp only [Conj] at H;
   sorry
 
-lemma Provable.pr_negneg_intro : (⊢ₐ[T ∔ Δ] Pr[T ∔ Γ](σ)) → (⊢ₐ[T ∔ Δ] Pr[T ∔ Γ](~ₐ~ₐσ)) := by
-  have h₁ : ⊢ₐ[T ∔ Γ] Pr[T ∔ Γ](σ ⇒ₐ ~ₐ~ₐσ) := D1 DNI;
-  have h₂ : (⊢ₐ[T ∔ Γ] Pr[T ∔ Γ](σ)) → (⊢ₐ[T ∔ Γ] Pr[T ∔ Γ](~ₐ~ₐσ)) := MP $ MP D2 h₁;
+lemma Provable.PrIntroConj :  (⊢ₐ[T ∔ Δ] (Pr[T ∔ Γ](σ) ⋏ₐ Pr[T ∔ Γ](π))) → (⊢ₐ[T ∔ Δ] Pr[T ∔ Γ](σ ⋏ₐ π)) := by
   intro H;
+  simp only [Conj] at H;
   sorry
+
+lemma Provable.PrIntroDN : (⊢ₐ[T ∔ Δ] Pr[T ∔ Γ](σ)) → (⊢ₐ[T ∔ Δ] Pr[T ∔ Γ](~ₐ~ₐσ)) := λ H => ElimImply' ⟨ElimImply' ⟨D2, D1 DNI⟩, H⟩
 
 lemma Provable.not_pr_negneg_intro : (⊢ₐ[T ∔ Δ] ~ₐPr[T ∔ Γ](σ)) → (⊢ₐ[T ∔ Δ] ~ₐPr[T ∔ Γ](~ₐ~ₐσ)) := by
   intro H;
   sorry
 
+lemma Provable.noContradiction' : (⊢ₐ[T ∔ Δ] (Pr[T ∔ Γ](σ) ⋏ₐ Pr[T ∔ Γ](~ₐσ))) → (⊢ₐ[T ∔ Δ] Pr[T ∔ Γ](⊥ₐ)) := by
+  have h₁ : ⊢ₐ[T ∔ Δ] (σ ⋏ₐ ~ₐσ) ⇒ₐ ⊥ₐ := NonContradiction;
+  have h₂ : ⊢ₐ[T ∔ Δ] Pr[T ∔ Γ](σ ⋏ₐ ~ₐσ) ⇒ₐ Pr[T ∔ Γ](⊥ₐ) := ElimImply' ⟨D2, (D1 h₁)⟩;
+  have h₃ : (⊢ₐ[T ∔ Δ] Pr[T ∔ Γ](σ) ⋏ₐ Pr[T ∔ Γ](~ₐσ)) → (⊢ₐ[T ∔ Δ] Pr[T ∔ Γ](⊥ₐ)) := λ h => ElimImply' ⟨h₂, PrIntroConj h⟩;
+  assumption;
+
 lemma Provable.noContradiction : (⊢ₐ[T ∔ Δ] (Pr[T ∔ Γ](σ) ⋏ₐ Pr[T ∔ Γ](~ₐσ)) ⇒ₐ Pr[T ∔ Γ](⊥ₐ)) := by
-  have h₁ : ⊢ₐ[T ∔ Γ] (σ ⋏ₐ ~ₐσ) ⇒ₐ ⊥ₐ := NonContradiction;
-  have h₂ : ⊢ₐ[T ∔ Γ] Pr[T ∔ Γ](σ ⋏ₐ ~ₐσ) ⇒ₐ Pr[T ∔ Γ](⊥ₐ) := MP D2 (D1 h₁);
-  have h₃ : (⊢ₐ[T ∔ Γ] Pr[T ∔ Γ](σ ⋏ₐ ~ₐσ))→  (⊢ₐ[T ∔ Γ] Pr[T ∔ Γ](⊥ₐ)) := MP h₂;
-  
+  have h₁ : ⊢ₐ[T ∔ Δ] (σ ⋏ₐ ~ₐσ) ⇒ₐ ⊥ₐ := NonContradiction;
+  have h₂ : ⊢ₐ[T ∔ Δ] Pr[T ∔ Γ](σ ⋏ₐ ~ₐσ) ⇒ₐ Pr[T ∔ Γ](⊥ₐ) := ElimImply' ⟨D2, (D1 h₁)⟩;
+  have h₃ : (⊢ₐ[T ∔ Δ] Pr[T ∔ Γ](σ) ⋏ₐ Pr[T ∔ Γ](~ₐσ)) → (⊢ₐ[T ∔ Δ] Pr[T ∔ Γ](⊥ₐ)) := λ h => ElimImply' ⟨h₂, PrIntroConj h⟩;
+  have h₄ : ((⊢ₐ[T ∔ Δ] Pr[T ∔ Γ](σ)) ∧ (⊢ₐ[T ∔ Δ] Pr[T ∔ Γ](~ₐσ))) → (⊢ₐ[T ∔ Δ] Pr[T ∔ Γ](⊥ₐ)) := λ h => h₃ (IntroConj' h);
   sorry
 
 end
 
+section ProvablilityFixedPoints
+
 @[simp] def GoedelSentence (G : Sentence α) := ⊢ₐ[T ∔ Γ] (G ⇔ₐ ~ₐPr[T ∔ Γ](G))
 
-class HasGoedelSentence extends Arithmetic α where 
-  hasGoedel : ∃ G, GoedelSentence T Γ G
+lemma existsGoedelSentence {T : Arithmetic α} (Γ) [HasFixedPointTheorem T Γ] : ∃ G, GoedelSentence T Γ G := HasFixedPointTheorem.FP (λ σ => ~ₐPr[T ∔ Γ](σ))
 
-def existsGoedelSentence {T : Arithmetic α} (Γ) [HasGoedelSentence T Γ] : ∃ G, GoedelSentence T Γ G := HasGoedelSentence.hasGoedel
-
-/-
-lemma HasGoedelSentence_of_HasFixedPointTheorem {T : Arithmetic α} : HasFixedPointTheorem T → HasGoedelSentence T := by 
-  intro h;
-  exact ⟨(HasFixedPointTheorem.FP (λ σ => ~ₐPr[T](σ)))⟩
--/
 
 @[simp] def HenkinSentence (H : Sentence α) := ⊢ₐ[T ∔ Γ] (H ⇔ₐ Pr[T ∔ Γ](H))
 
-class HasHenkinSentence where 
-  hasHenkin : ∃ H, HenkinSentence T Γ H
+lemma existsHenkinSentence {T : Arithmetic α} {Γ} [HasFixedPointTheorem T Γ] : ∃ H, HenkinSentence T Γ H := HasFixedPointTheorem.FP (λ σ => (Pr[T ∔ Γ](σ)))
+
 
 @[simp] def JeroslowSentence (J : Sentence α) := ⊢ₐ[T ∔ Γ] (J ⇔ₐ Pr[T ∔ Γ](~ₐJ))
 
 @[simp] def NotJeroslowSentence (NJ : Sentence α) := ⊢ₐ[T ∔ Γ] (NJ ⇔ₐ ~ₐPr[T ∔ Γ](~ₐNJ))
 
+
 @[simp] def KreiselSentence (σ : Sentence α) (K : Sentence α) := ⊢ₐ[T ∔ Γ] (K ⇔ₐ (Pr[T ∔ Γ](K) ⇒ₐ σ))
 
-class HasKreiselSentence extends Arithmetic α where 
-  hasKriesel (σ : Sentence α) : ∃ K, KreiselSentence T Γ σ K 
-  
-def existsKreiselSentence {T : Arithmetic α} (Γ) [HasKreiselSentence T Γ] : ∀ (σ : Sentence α), ∃ (K : Sentence α), KreiselSentence T Γ σ K := HasKreiselSentence.hasKriesel
+lemma existsKreiselSentence {T : Arithmetic α} {Γ} [HasFixedPointTheorem T Γ] (σ) : ∃ K, KreiselSentence T Γ σ K := HasFixedPointTheorem.FP (λ π => (Pr[T ∔ Γ](π) ⇒ₐ σ))
 
-/-
-lemma HasKreiselSentence_of_HasFixedPointTheorem {T : Arithmetic α} : HasFixedPointTheorem T → HasKreiselSentence T := by 
-  intro h;
-  exact ⟨λ σ => HasFixedPointTheorem.FP (λ π => (Pr[T](π) ⇒ₐ σ))⟩
--/
+end ProvablilityFixedPoints
 
 end Arithmetic
 

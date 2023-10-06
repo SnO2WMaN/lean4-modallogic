@@ -1,12 +1,10 @@
-import Aesop
+import ModalLogic.PropositionalLogic.DeductionSystem
 import ModalLogic.Arithmetic.Notation
 import ModalLogic.Arithmetic.IT1
-import ModalLogic.PropositionalLogic.DeductionSystem.Intuitional
-import ModalLogic.PropositionalLogic.DeductionSystem.Classical
 
 open ModalLogic.PropositionalLogic 
 open Axioms
-open DeductionSystem HasMP HasExplode
+open DeductionSystem HasElimImply HasExplode
 open ModalLogic.Arithmetic.Arithmetic Derivability1 Derivability2
 
 namespace ModalLogic.Arithmetic
@@ -14,17 +12,14 @@ namespace ModalLogic.Arithmetic
 variable [DecidableEq α]
 variable {T U : Arithmetic α} {Γ Δ : Context (Sentence α)}
 
-variable [IsIntuitional T.toDeductionSystem] -- TODO: remove
-variable [IsClassical T.toDeductionSystem]
-variable [HasFixedPointTheorem T Γ] [HasGoedelSentence T Γ]
-variable [Derivability1 T Γ] [Derivability2 T Γ] [FormalizedSigma1Completeness T Γ]
+variable [IsClassical T.toDeductionSystem] [HasFixedPointTheorem T Γ] [Derivability1 T Γ Γ] [Derivability2 T Γ Γ] [FormalizedSigma1Completeness T Γ Γ]
 
 variable [IsClassical U.toDeductionSystem]
 
 lemma GoedelIT2.lem1 : ∀ (σ : Sentence α), ⊢ₐ[T ∔ Γ] (~ₐPr[T ∔ Γ](σ) ⇒ₐ ConL[T ∔ Γ]) := by
   intro σ; 
   have h₁ : ⊢ₐ[T ∔ Γ] Pr[T ∔ Γ](⊥ₐ ⇒ₐ σ) := D1 (EFQ σ);
-  have h₂ : ⊢ₐ[T ∔ Γ] (Pr[T ∔ Γ](⊥ₐ) ⇒ₐ Pr[T ∔ Γ](σ)) := MP D2 h₁;
+  have h₂ : ⊢ₐ[T ∔ Γ] (Pr[T ∔ Γ](⊥ₐ) ⇒ₐ Pr[T ∔ Γ](σ)) := ElimImply' ⟨D2, h₁⟩;
   have h₃ : ⊢ₐ[T ∔ Γ] ~ₐPr[T ∔ Γ](σ) ⇒ₐ ~ₐPr[T ∔ Γ](⊥ₐ) := contrapose₁ h₂;
   exact h₃;
 
@@ -40,6 +35,20 @@ lemma GoedelIT2.lem2 (hTU : ∀ {σ}, (⊢ₐ[T ∔ Γ] σ) → (⊢ₐ[U ∔ Δ
     have h₂ : ⊢ₐ[U ∔ Δ] (Pr[T ∔ Γ](σ) ⋏ₐ Pr[T ∔ Γ](~ₐσ)) ⇒ₐ Pr[T ∔ Γ](⊥ₐ) := hTU h₁;
     have h₃ : ⊢ₐ[U ∔ Δ] Pr[T ∔ Γ](σ) ⇒ₐ Pr[T ∔ Γ](⊥ₐ) := conj_dilemma_elim_left ⟨h₂, H⟩;
     exact U.contrapose₁ h₃;
+
+/-
+lemma GoedelIT2.lem2' (hΓΔ : ∀ {σ}, (⊢ₐ[T ∔ Γ] σ) → (⊢ₐ[T ∔ Δ] σ))
+  : (⊢ₐ[T ∔ Δ] (ConL[T ∔ Γ] ⇒ₐ ~ₐPr[T ∔ Γ](σ))) ↔ (⊢ₐ[T ∔ Δ] (Pr[T ∔ Γ](σ) ⇒ₐ Pr[T ∔ Γ](~ₐσ))) := by
+  apply Iff.intro;
+  . intro H;
+    have h₁ : ⊢ₐ[T ∔ Δ] ~ₐPr[T ∔ Γ](~ₐσ) ⇒ₐ ConL[T ∔ Γ] := hΓΔ (GoedelIT2.lem1 (~ₐσ));
+    have h₂ : ⊢ₐ[T ∔ Δ] ~ₐPr[T ∔ Γ](~ₐσ) ⇒ ~ₐPr[T ∔ Γ](σ) := imply_trans ⟨h₁, H⟩;
+    exact contrapose₄ h₂;
+  . intro H;
+    have h₁ : (⊢ₐ[T ∔ Γ] (Pr[T ∔ Γ](σ) ⋏ₐ Pr[T ∔ Γ](~ₐσ))) → (⊢ₐ[T ∔ Γ] Pr[T ∔ Γ](⊥ₐ)) := Provable.noContradiction';
+    have h₃ : ⊢ₐ[U ∔ Δ] Pr[T ∔ Γ](σ) ⇒ₐ Pr[T ∔ Γ](⊥ₐ) := conj_dilemma_elim_left ⟨h₂, H⟩;
+    exact U.contrapose₁ h₃;
+-/
 
 lemma GoedelIT2.lem3 (hG : GoedelSentence T Γ G ): ⊢ₐ[T ∔ Γ] (ConL[T ∔ Γ] ⇒ₐ ~ₐPr[T ∔ Γ](G)) := by
   have h₁ : ⊢ₐ[T ∔ Γ] ~ₐG ⇒ₐ Pr[T ∔ Γ](~ₐG) := FormalizedSigma1Completeness.FS1C;
