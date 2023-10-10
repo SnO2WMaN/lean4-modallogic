@@ -5,9 +5,6 @@ open ModalLogic.PropositionalLogic.Axioms
 open ModalLogic.PropositionalLogic.DeductionSystem
 open HasWeakenContext HasIntroImply HasElimImply
 
-open Finset
-attribute [simp] union_comm insert_eq
-
 namespace ModalLogic.PropositionalLogic.DeductionSystem
 
 variable [DecidableEq α] [HasImply α]

@@ -6,28 +6,26 @@ open ModalLogic.PropositionalLogic
 
 namespace ModalLogic.PropositionalLogic
 
-variable [DecidableEq α]
-
-abbrev Context (α) := Finset α
-
-structure DeductionSystem (α) extends ProveSystem α where
+structure DeductionSystem (α : Type u) [DecidableEq α] where
   Deducts: Context α → α → Prop
-  NoContextEquality : (Deducts ∅ φ) ↔ (Proves φ)
-  InContext : ∀ {Γ φ}, (φ ∈ Γ) → (Deducts Γ φ)
 
 namespace DeductionSystem
+
+variable {α : Type u} [DecidableEq α]
 
 notation Γ " ⊢ᵈ[" D "] " φ => DeductionSystem.Deducts D Γ φ 
 notation Γ " ⊬ᵈ[" D "] " φ => ¬(Γ ⊢ᵈ[D] φ)
 notation "⊢ᵈ[" D "] " φ => ∅ ⊢ᵈ[D] φ
 notation "⊬ᵈ[" D "] " φ => ¬(⊢ᵈ[D] φ)
 
-attribute [simp] NoContextEquality InContext
-
 section Rules
 
 variable (D : DeductionSystem α)
 variable [HasImply α] [HasBot α] [HasDisj α] [HasConj α] [HasNeg α]
+
+class HasInit extends (DeductionSystem α) where
+  Init {Γ φ} : (φ ∈ Γ) → (Γ ⊢ᵈ[D] φ)
+attribute [simp] HasInit.Init
 
 class HasWeakenContext extends (DeductionSystem α) where
   WeakenContext {Γ Δ φ} : (Γ ⊢ᵈ[D] φ) → ((Γ ∪ Δ) ⊢ᵈ[D] φ)
@@ -74,15 +72,13 @@ end Rules
 
 section Lemmas
 
+
 variable [HasImply α] [HasBot α] [HasNeg α] [HasNegDef α]
-variable {D : DeductionSystem α}
+variable {D : DeductionSystem α} 
 
-instance : Coe (∅ ⊢ᵈ[D] φ) (⊢[D.toProveSystem] φ) := ⟨D.NoContextEquality.mp⟩
-instance : Coe (⊢ᵈ[D] φ) (∅ ⊢ᵈ[D] φ) := ⟨λ h => D.NoContextEquality.mpr h⟩
+@[simp] lemma Trivial [HasInit D] (φ : α) : {φ} ⊢ᵈ[D] φ := by aesop;
 
-@[simp] lemma Trivial (φ : α) : {φ} ⊢ᵈ[D] φ := by aesop;
-
-@[simp] lemma Id [HasIntroImply D] : Γ ⊢ᵈ[D] φ ⇒ φ := by simp;
+@[simp] lemma Id [HasInit D] [HasIntroImply D] : Γ ⊢ᵈ[D] (Axioms.ID φ) := by simp;
 
 @[simp]
 lemma IntroNeg [HasIntroImply D] : ((Γ ∪ {φ}) ⊢ᵈ[D] ⊥) → (Γ ⊢ᵈ[D] ~φ) := by aesop;
@@ -123,7 +119,7 @@ section BasicSystem
 variable (D : DeductionSystem α)
 variable [HasImply α] [HasBot α] [HasDisj α] [HasConj α] [HasNeg α]
 
-class IsMinimal₀ extends (HasIntroImply D), (HasElimImply D), (HasWeakenContext D)
+class IsMinimal₀ extends (HasInit D), (HasIntroImply D), (HasElimImply D), (HasWeakenContext D)
 
 class IsMinimal extends (IsMinimal₀ D), (HasIntroDisj D), (HasIntroConj D), (HasElimConj D)
 instance [IsMinimal D] : IsMinimal₀ D := inferInstance
