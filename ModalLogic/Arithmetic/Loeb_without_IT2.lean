@@ -16,7 +16,7 @@ theorem Loeb_without_GoedelIT2 {σ} : (⊢ₐ[T ∔ Γ] σ) ↔ (⊢ₐ[T ∔ Γ
   . intro H;
     exact ElimImply' ⟨K', H⟩;
   . intro H;
-    have ⟨K, hK⟩ := @existsKreiselSentence _ T Γ _ σ;
+    have ⟨K, (hK : KreiselSentence T Γ σ K)⟩ := existsKreiselSentence σ 
     simp only [KreiselSentence] at hK;
     have h₁  : ⊢ₐ[T ∔ Γ] K ⇒ₐ (Pr[T ∔ Γ](K) ⇒ₐ σ) := equiv_mp hK;
     have h₂  : ⊢ₐ[T ∔ Γ] Pr[T ∔ Γ](K ⇒ₐ (Pr[T ∔ Γ](K) ⇒ₐ σ)) := D1 h₁;

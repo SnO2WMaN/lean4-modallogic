@@ -52,22 +52,19 @@ end Sentence
 
 open Sentence
 
-variable [DecidableEq α]
-
-structure Arithmetic (α) extends DeductionSystem (Sentence α) where 
+structure Arithmetic (α) [DecidableEq α] extends DeductionSystem (Sentence α) where 
   Provable : (Context (Sentence α)) → (Sentence α) → (Sentence α)
 
 notation "Pr[" T " ∔ " Γ "](" σ ")" => Arithmetic.Provable T Γ σ
 notation "Pr[" T "](" σ ")" => Pr[T ∔ ∅](σ)
 
-def Arithmetic.Proves_def (T : Arithmetic α) (σ : Sentence α) := T.Proves σ
-
-def Arithmetic.Deducible_def (T : Arithmetic α) (Γ σ) := T.Deducts Γ σ
+variable [DecidableEq α]
+private def Arithmetic.Deducible_def (T : Arithmetic α) (Γ σ) := T.Deducts Γ σ
 
 notation:20 "⊢ₐ[" T " ∔ " Γ "] " σ => Arithmetic.Deducible_def T Γ σ
-notation:20 "⊬ₐ[" T " ∔ " Γ "] " σ => ¬(Arithmetic.Deducible_def T Γ σ)
+notation:20 "⊬ₐ[" T " ∔ " Γ "] " σ => ¬(⊢ₐ[T ∔ Γ] σ)
 
-notation:20 "⊢ₐ[" T "] " σ => Arithmetic.Deducible_def T ∅ σ
+notation:20 "⊢ₐ[" T "] " σ => ⊢ₐ[T ∔ ∅] σ
 notation:20 "⊬ₐ[" T "] " σ => ¬(⊢ₐ[T] σ)
 
 namespace Arithmetic
