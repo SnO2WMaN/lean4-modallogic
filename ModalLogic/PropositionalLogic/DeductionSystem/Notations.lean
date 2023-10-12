@@ -73,7 +73,7 @@ end Rules
 section Lemmas
 
 
-variable [HasImply α] [HasBot α] [HasNeg α] [HasNegDef α]
+variable [HasImply α] [HasBot α] [HasNeg α] [DefinedNeg α]
 variable {D : DeductionSystem α} 
 
 @[simp] lemma Trivial [HasInit D] (φ : α) : {φ} ⊢ᵈ[D] φ := by aesop;
@@ -129,7 +129,7 @@ instance [IsIntuitional D] : IsMinimal D := inferInstance
 
 class IsClassical extends (IsMinimal D), (HasElimDN D)
 instance [IsClassical D] : IsMinimal D := inferInstance
-instance [HasNegDef α] [IsClassical D] : IsIntuitional D := by constructor; aesop;
+instance [DefinedNeg α] [IsClassical D] : IsIntuitional D := by constructor; aesop;
 
 end BasicSystem
 

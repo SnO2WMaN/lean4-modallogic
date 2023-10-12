@@ -1,64 +1,26 @@
 import Mathlib.Data.Finset.Basic
+import Mathlib.Data.Finset.Fold
+import ModalLogic.Notations
 
 open Finset
 
 namespace ModalLogic.PropositionalLogic
 
-section Symbols
+abbrev Context (α) [DecidableEq α] := Finset α
 
-variable (α : Type u)
+namespace Context
 
-class HasBot where bot : α
-scoped[ModalLogic.PropositionalLogic] notation:70 "⊥" => HasBot.bot
+open HasConj HasDisj
 
-class HasTop where top : α
-scoped[ModalLogic.PropositionalLogic] notation:70 "⊤" => HasTop.top
+variable {α : Type u} [DecidableEq α]
 
+variable [HasTop α] [HasBot α] [HasConj α] [HasDisj α]
+variable [IsCommutative α conj] [IsAssociative α conj] 
+variable [IsCommutative α disj] [IsAssociative α disj] 
 
-class HasDisj where disj : α → α → α
-scoped[ModalLogic.PropositionalLogic] infixl:63 " ⋎ " => HasDisj.disj
+def Context.ConjAll (Γ : Context α) := fold (· ⋏ ·) (⊤ : α) id Γ
+def Context.DisjAll (Γ : Context α) := fold (· ⋎ ·) (⊥ : α) id Γ
 
-class HasConj where conj : α → α → α
-scoped[ModalLogic.PropositionalLogic] infixl:63 " ⋏ " => HasConj.conj
-
-class HasNeg where neg : α → α
-scoped[ModalLogic.PropositionalLogic] prefix:64 "~" => HasNeg.neg
-
-class HasImply where imply : α → α → α
-scoped[ModalLogic.PropositionalLogic] infixr:62 " ⇒ " => HasImply.imply
-
-class HasEquiv where equiv : α → α → α
-scoped[ModalLogic.PropositionalLogic] infixl:61 " ⇔ " => HasEquiv.equiv
-
-end Symbols
-
-
-section DefinedByOtherSymbols
-
-variable (α : Type u)
-
-class HasNegDef [HasNeg α] [HasBot α] [HasImply α] where 
-  NegDef (φ : α) : (~φ) = (φ ⇒ ⊥)
-attribute [simp] HasNegDef.NegDef
-
-class HasDisjDef [HasDisj α] [HasImply α] [HasNeg α] where 
-  DisjDef (φ ψ : α) : (φ ⋎ ψ) = (~φ ⇒ ψ)
-attribute [simp] HasDisjDef.DisjDef
-
-class HasConjDef [HasConj α] [HasImply α] [HasNeg α] where 
-  ConjDef (φ ψ : α) : (φ ⋏ ψ) = ~(φ ⇒ ~ψ)
-attribute [simp] HasConjDef.ConjDef
-
-class HasEquivDef [HasEquiv α] [HasImply α] [HasConj α] where 
-  EquivDef (φ ψ : α) : (φ ⇔ ψ) = ((φ ⇒ ψ) ⋏ (ψ ⇒ φ))
-attribute [simp] HasEquivDef.EquivDef
-
-end DefinedByOtherSymbols
-
-
-structure ProveSystem (α : Type u) where
-  Proves: α → Prop
-notation "⊢[" S "] " φ => ProveSystem.Proves S φ
-notation "⊬[" S "] " φ => ¬(⊢[S] φ)
+end Context
 
 end ModalLogic.PropositionalLogic

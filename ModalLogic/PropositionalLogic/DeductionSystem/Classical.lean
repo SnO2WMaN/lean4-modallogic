@@ -13,7 +13,7 @@ namespace ModalLogic.PropositionalLogic.DeductionSystem
 variable [DecidableEq α] [HasImply α] [HasDisj α] [HasConj α] [HasNeg α]
 variable {D : DeductionSystem α} [IsClassical D]
 
-variable [HasBot α] [HasNegDef α]
+variable [HasBot α] [DefinedNeg α]
 
 @[simp]
 lemma Contrapose₃ : (Γ ⊢ᵈ[D] (~φ ⇒ ψ)) → (Γ ⊢ᵈ[D] (~ψ ⇒ φ)) := by
@@ -39,7 +39,7 @@ lemma ElimImplyAntDN : (Γ ⊢ᵈ[D] (~~φ ⇒ ψ)) → (Γ ⊢ᵈ[D] (φ ⇒ ψ
   exact contrapose₄ (contrapose₃ H₁);
 alias imply_elim_ant_dne := ElimImplyAntDN
 
-variable [HasBot α] [HasNegDef α] in
+variable [HasBot α] [DefinedNeg α] in
 lemma ElimImplyConDN : (Γ ⊢ᵈ[D] (φ ⇒ ~~ψ)) → (Γ ⊢ᵈ[D] (φ ⇒ ψ)) := by
   intro H₁;
   exact contrapose₄ (contrapose₂ H₁);

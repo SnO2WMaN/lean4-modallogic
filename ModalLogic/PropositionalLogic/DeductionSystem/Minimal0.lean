@@ -38,11 +38,11 @@ lemma ImplyTrans : ((Γ ⊢ᵈ[D] (φ ⇒ ψ)) ∧ (Γ ⊢ᵈ[D] (ψ ⇒ ξ))) �
   aesop;
 alias imply_trans := ImplyTrans
 
-variable [HasBot α] [HasNeg α] [HasNegDef α]
+variable [HasBot α] [HasNeg α] [DefinedNeg α]
 
 @[simp]
 theorem DNI : Γ ⊢ᵈ[D] (Axioms.DNI φ) := by
-  simp only [Axioms.DNI, HasNegDef.NegDef];
+  simp only [Axioms.DNI, DefinedNeg.defNeg];
   have h₁ : (Γ ∪ {φ ⇒ ⊥, φ}) ⊢ᵈ[D] φ := by simp;
   have h₂ : (Γ ∪ {φ ⇒ ⊥, φ}) ⊢ᵈ[D] φ ⇒ ⊥ := by simp;
   have h₃ := ElimImply ⟨h₂, h₁⟩;
@@ -57,7 +57,7 @@ theorem IntroDN : (Γ ⊢ᵈ[D] (φ)) → (Γ ⊢ᵈ[D] (~~φ)) := by
 @[simp]
 theorem Contrapose₁ : (Γ ⊢ᵈ[D] (φ ⇒ ψ)) → (Γ ⊢ᵈ[D] (~ψ ⇒ ~φ)) := by
   intro H₁;
-  simp [HasNegDef.NegDef];
+  simp [DefinedNeg.defNeg];
 
   have H₁ : (Γ ∪ {ψ ⇒ ⊥} ∪ {φ}) ⊢ᵈ[D] φ ⇒ ψ := H₁;
   have h₁ : (Γ ∪ {ψ ⇒ ⊥} ∪ {φ}) ⊢ᵈ[D] ψ ⇒ ⊥ := by simp;

@@ -54,28 +54,26 @@ lemma ElimConjR_Dilemma : ((Γ ⊢ᵈ[D] (φ ⋏ ψ) ⇒ ρ) ∧ (Γ ⊢ᵈ[D] �
   aesop;
 alias conj_dilemma_elim_right := ElimConjR_Dilemma
 
-variable [HasBot α] [HasNeg α] [HasNegDef α]
+variable [HasBot α] [HasNeg α] [DefinedNeg α]
 
-open HasNegDef
-attribute [simp] NegDef
+open DefinedNeg
 
 lemma NonContradiction {φ} : (Γ ⊢ᵈ[D] (Axioms.NonContradiction φ)) := by
-  simp only [Axioms.NonContradiction, NegDef];
+  simp only [Axioms.NonContradiction, defNeg];
   have h₁ : (Γ ∪ {φ ⋏ (φ ⇒ ⊥)}) ⊢ᵈ[D] φ ⋏ (φ ⇒ ⊥) := by simp;
   have h₁l := ElimConjL h₁;
   have h₁r := ElimConjR h₁;
   have h₂ := ElimImply ⟨h₁r, h₁l⟩;
   aesop;
 
-variable [HasEquiv α] [HasEquivDef α]
+variable [HasEquiv α] [DefinedEquiv α]
 
-open HasEquivDef
-attribute [simp] EquivDef
+open DefinedEquiv
 
 @[simp]
 lemma IntroEquiv : ((Γ ⊢ᵈ[D] (φ ⇒ ψ)) ∧ (Γ ⊢ᵈ[D] (ψ ⇒ φ))) → (Γ ⊢ᵈ[D] (φ ⇔ ψ)) := by
   intro H;
-  simp [EquivDef];
+  simp [defEquiv];
   have := IntroConj' H;
   aesop;
 alias equiv_intro := IntroEquiv
@@ -87,7 +85,7 @@ alias equiv_comm := CommEquiv
 @[simp]
 lemma EquivMP : (Γ ⊢ᵈ[D] (φ ⇔ ψ)) → (Γ ⊢ᵈ[D] φ ⇒ ψ) := by
   intro H;
-  simp [EquivDef] at H;
+  simp [defEquiv] at H;
   exact ElimConjL H;
 alias equiv_mp := EquivMP
 
