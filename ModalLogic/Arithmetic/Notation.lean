@@ -27,16 +27,16 @@ def Disj := (~φ) ⇒ ψ
 instance : HasDisj (Sentence α) := ⟨Disj⟩
 
 def def_Disj : (φ ⋎ ψ) = (~φ ⇒ ψ) := rfl
-instance : HasDisjDef (Sentence α) := ⟨def_Disj⟩
+instance : DefinedDisj (Sentence α) := ⟨def_Disj⟩
 
 def Conj := ~(φ ⇒ ~ψ)
 instance : HasConj (Sentence α) := ⟨Conj⟩
 
 def def_Conj : (φ ⋏ ψ) = ~(φ ⇒ ~ψ) := rfl
-instance : HasConjDef (Sentence α) := ⟨def_Conj⟩
+instance : DefinedConj (Sentence α) := ⟨def_Conj⟩
 
 def Equiv := (φ ⇒ ψ) ⋏ (ψ ⇒ φ)
-instance : PropositionalLogic.HasEquiv (Sentence α) := ⟨Equiv⟩
+instance : ModalLogic.HasEquiv (Sentence α) := ⟨Equiv⟩
 
 def def_Equiv : (φ ⇔ ψ) = ((φ ⇒ ψ) ⋏ (ψ ⇒ φ)) := rfl
 instance : DefinedEquiv (Sentence α) := ⟨def_Equiv⟩

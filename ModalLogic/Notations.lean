@@ -3,7 +3,10 @@ namespace ModalLogic
 
 section Symbols
 
-variable (α : Type u)
+class HasVar (α : Type u) (β : Type v) where var : α → β 
+prefix:90 "#" => HasVar.var
+
+variable (α : Type u) (β : Type v)
 
 class HasBot where bot : α
 notation:70 "⊥" => HasBot.bot
@@ -61,6 +64,5 @@ class DefinedDia where defDia (φ : α) : (◇φ) = ~(□(~φ))
 attribute [simp] DefinedDia.defDia
 
 end DefinedBy
-
 
 end ModalLogic
