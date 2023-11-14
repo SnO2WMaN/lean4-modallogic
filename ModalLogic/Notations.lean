@@ -3,7 +3,7 @@ namespace ModalLogic
 
 section Symbols
 
-class HasVar (α : Type u) (β : Type v) where var : α → β 
+class HasVar (α : Type u) (β : Type v) where var : α → β
 prefix:90 "#" => HasVar.var
 
 variable (α : Type u) (β : Type v)
@@ -19,6 +19,17 @@ infixl:63 " ⋎ " => HasDisj.disj
 
 class HasConj where conj : α → α → α
 infixl:63 " ⋏ " => HasConj.conj
+
+/-
+theorem HasConj.neq [DecidableEq α] [HasConj α] {φ ψ ξ ζ : α} : (φ ≠ ξ ∨ ψ ≠ ζ) ↔ (φ ⋏ ψ) ≠ (ξ ⋏ ζ) := by
+  apply Iff.intro
+  . intro h; cases h with
+    | inl h => intro h'; contradiction
+    | inr h => intro h'; contradiction
+  . intro h; cases h with
+    | inl h => sorry;
+    | inr h => sorry;
+-/
 
 class HasNeg where neg : α → α
 prefix:64 "~" => HasNeg.neg
@@ -39,14 +50,14 @@ end Symbols
 
 
 section DefinedBy
- 
+
 variable (α : Type u)
 variable [HasBot α] [HasTop α] [HasNeg α] [HasImply α] [HasDisj α] [HasConj α] [HasEquiv α]
 
 class DefinedNeg where defNeg (φ : α) : (~φ) = (φ ⇒ ⊥)
 attribute [simp] DefinedNeg.defNeg
 
-class DefinedTop where defTop : (⊤ : α) = ~(⊥ : α) 
+class DefinedTop where defTop : (⊤ : α) = ~(⊥ : α)
 attribute [simp] DefinedTop.defTop
 
 class DefinedDisj where defDisj (φ ψ : α) : (φ ⋎ ψ) = (~φ ⇒ ψ)
@@ -64,5 +75,19 @@ class DefinedDia where defDia (φ : α) : (◇φ) = ~(□(~φ))
 attribute [simp] DefinedDia.defDia
 
 end DefinedBy
+
+section Duality
+
+variable [HasNeg α] [HasConj α] [HasDisj α] in
+class DeMorgan where
+  conjDual {φ ψ : α} : (~φ ⋎ ~ψ) = ~(φ ⋏ ψ)
+  disjDual {φ ψ : α} : (~φ ⋏ ~ψ) = ~(φ ⋎ ψ)
+
+variable [HasNeg α] [HasBox α] [HasDia α] in
+class BoxDeMorgan where
+  boxDual {φ : α} : ~(□φ) = (◇(~φ))
+  diaDual {φ : α} : ~(◇φ) = (□(~φ))
+
+end Duality
 
 end ModalLogic
